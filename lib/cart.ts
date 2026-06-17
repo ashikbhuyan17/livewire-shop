@@ -5,15 +5,16 @@ import { SignJWT, jwtVerify } from "jose";
 import { clampQtyToAvailableStock } from "@/lib/stock-utils";
 
 const CART_KEY = "guest_cart";
-const JWT_SECRET = process.env.GUEST_CART_JWT_SECRET;
 
-if (!JWT_SECRET) {
-  throw new Error(
-    "GUEST_CART_JWT_SECRET is not defined in environment variables",
-  );
+function getSecretKey(): Uint8Array {
+  const secret = process.env.GUEST_CART_JWT_SECRET?.trim();
+  if (!secret) {
+    throw new Error(
+      "GUEST_CART_JWT_SECRET is not defined in environment variables",
+    );
+  }
+  return new TextEncoder().encode(secret);
 }
-
-const secretKey = new TextEncoder().encode(JWT_SECRET);
 
 export type CartItem = {
   id: number;
@@ -37,12 +38,12 @@ async function signCart(cart: Cart): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d") // adjust if you want
-    .sign(secretKey);
+    .sign(getSecretKey());
 }
 
 async function verifyCart(token: string): Promise<Cart | null> {
   try {
-    const { payload } = await jwtVerify(token, secretKey);
+    const { payload } = await jwtVerify(token, getSecretKey());
     const cart = payload.cart as Cart | undefined;
 
     if (!cart || !Array.isArray(cart.items)) return null;
