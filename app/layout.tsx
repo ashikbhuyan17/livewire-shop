@@ -126,14 +126,8 @@ export default async function RootLayout({
         <>
           <WishlistStoreInit productIds={wishlistSummary.productIds} />
           <CompareStoreInit productIds={compareSummary.productIds} />
-          <Header
-            categories={categories}
-            user={user}
-            wishlistCount={wishlistSummary.count}
-            compareCount={compareSummary.count}
-            notificationCount={notificationSummary.count}
-          />
-          <div className="mt-14 pb-24 lg:mt-16 lg:pb-0">
+          <Header categories={categories} user={user} />
+          <div className="mt-[6.75rem] pb-24 sm:mt-[7.5rem] lg:mt-[9.75rem] lg:pb-0">
             <CartSidebar initialCart={initialCart} />
             {children}
             <Toaster position="top-center" richColors />

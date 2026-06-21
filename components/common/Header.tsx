@@ -1,11 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import {
   User,
   Menu,
   X,
   LogOut,
+  Phone,
+  MapPin,
+  FileText,
+  CreditCard,
+  PackageCheck,
+  Gift,
+  ShoppingCart,
+  Sparkles,
+  Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -16,19 +25,26 @@ import LoginModal from './LoginModal';
 import { DialogTrigger } from '../ui/dialog';
 import { clearAuth } from '@/action/token';
 import type { UserCookie } from '@/action/token';
-import WishlistHeaderLink from './WishlistHeaderLink';
-import NotificationHeaderLink from './NotificationHeaderLink';
-import CompareHeaderLink from './CompareHeaderLink';
 import BrandLogoLink from './BrandLogoLink';
 import HeaderProductSearch from '@/components/search/HeaderProductSearch';
+import { CATEGORIES } from '@/lib/home-demo-data';
+import { useCartStore } from '@/stores/cart-store';
+import { cn } from '@/lib/utils';
+
+const TOP_LINKS = [
+  { label: 'Order Tracking', href: '/user/orders', icon: PackageCheck },
+  { label: 'Blogs', href: '/blogs', icon: FileText },
+  { label: 'EMI Policy', href: '/pages/emi-policy', icon: CreditCard },
+  { label: 'Store Location', href: '/our-outlets', icon: MapPin },
+] as const;
+
+const NAV_CATEGORIES = CATEGORIES.slice(0, 8);
 
 function UserProfilePill({
   user,
-  showLogout = false,
   onLogout,
 }: {
   user: UserCookie;
-  showLogout?: boolean;
   onLogout?: () => void;
 }) {
   const router = useRouter();
@@ -42,11 +58,11 @@ function UserProfilePill({
   };
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1">
       <Link
         prefetch
         href="/user/account"
-        className="flex items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 text-black transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+        className="flex items-center gap-1.5 rounded-md border border-secondary/80 bg-secondary/15 px-2 py-1 text-white transition hover:bg-secondary/25"
         aria-label="My account"
       >
         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-primary">
@@ -62,120 +78,148 @@ function UserProfilePill({
             initial
           )}
         </div>
-        <div className="min-w-0 hidden md:block">
-          <p className="truncate text-xs font-semibold text-black">{user.name}</p>
-          <p className="truncate text-[11px] text-black/80">{user.email}</p>
-        </div>
+        <span className="hidden max-w-[6rem] truncate text-xs font-semibold xl:inline">
+          {user.name?.split(' ')[0] ?? 'Account'}
+        </span>
       </Link>
-      {showLogout && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8 text-white hover:bg-white/10 hover:text-white shrink-0"
-          onClick={handleLogout}
-          title="Log out"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-8 text-white/80 hover:bg-white/10 hover:text-white"
+        onClick={handleLogout}
+        title="Log out"
+      >
+        <LogOut className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 }
 
-function HeaderActions({
-  compareCount,
-  wishlistCount,
-  notificationCount,
-  displayUser,
-  onLogout,
-  onLoginSuccess,
+function ActionPill({
+  href,
+  onClick,
+  icon: Icon,
+  label,
+  badge,
+  className,
 }: {
-  compareCount: number;
-  wishlistCount: number;
-  notificationCount: number;
-  displayUser: UserCookie | null;
-  onLogout: () => void;
-  onLoginSuccess: (user: UserCookie) => void;
+  href?: string;
+  onClick?: () => void;
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  badge?: number;
+  className?: string;
 }) {
-  return (
-    <div className="flex items-center justify-end gap-1 sm:gap-1.5 md:gap-2">
-      <CompareHeaderLink initialCount={compareCount} />
-      <WishlistHeaderLink initialCount={wishlistCount} />
-      {displayUser ? (
-        <NotificationHeaderLink initialCount={notificationCount} />
+  const inner = (
+    <>
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="hidden whitespace-nowrap text-[11px] font-bold uppercase leading-none tracking-wide lg:inline">
+        {label}
+      </span>
+      {badge != null && badge > 0 ? (
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1 text-[9px] font-bold text-slate-900">
+          {badge > 99 ? '99+' : badge}
+        </span>
       ) : null}
+    </>
+  );
 
-      <div className="hidden items-center gap-1.5 lg:flex">
-        {displayUser ? (
-          <UserProfilePill
-            user={displayUser}
-            showLogout
-            onLogout={onLogout}
-          />
-        ) : (
-          <LoginModal onLoginSuccess={onLoginSuccess}>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 px-2 text-white hover:bg-white/10 hover:text-white lg:h-9"
-              >
-                <User className="h-3.5 w-3.5" />
-                <span className="hidden xl:inline">Sign In / Sign up</span>
-              </Button>
-            </DialogTrigger>
-          </LoginModal>
-        )}
-      </div>
-    </div>
+  const pillClass = cn(
+    'relative inline-flex h-9 shrink-0 flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-secondary/70 bg-primary px-2.5 text-white transition hover:border-secondary hover:bg-primary/90 sm:h-10 sm:px-3',
+    className,
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={pillClass} aria-label={label}>
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <Link prefetch href={href ?? '#'} className={pillClass} aria-label={label}>
+      {inner}
+    </Link>
   );
 }
 
 export default function Header({
   categories,
   user,
-  wishlistCount = 0,
-  compareCount = 0,
-  notificationCount = 0,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   categories: any;
   user: UserCookie | null;
-  wishlistCount?: number;
-  compareCount?: number;
-  notificationCount?: number;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserCookie | null>(user);
+  const cart = useCartStore((s) => s.cart);
+  const setCartSheetOpen = useCartStore((s) => s.setCartSheetOpen);
+  const cartCount = cart.items.reduce((n, i) => n + i.qty, 0);
 
   useEffect(() => {
     setCurrentUser(user);
   }, [user]);
 
   const displayUser = currentUser ?? user;
-
   const pathname = usePathname();
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    setCategoryMenuOpen(false);
   }, [pathname]);
 
   return (
-    <div className="fixed left-0 right-0 top-0 z-50">
-      <header className="bg-headerBg py-1 text-white shadow-lg backdrop-blur-md">
-        <div className="mx-auto w-full max-w-[95rem] px-3 sm:px-4">
-          {/* Mobile layout */}
-          <div className="flex h-11 items-center gap-2 lg:hidden">
+    <div className="fixed left-0 right-0 top-0 z-50 shadow-md">
+      {/* Top utility bar */}
+      <div className="hidden border-b border-slate-200 bg-white sm:block">
+        <div className="mx-auto flex h-9 max-w-[95rem] items-center justify-between px-4 text-xs text-slate-600 lg:px-6">
+          <Link
+            href="tel:09638001122"
+            className="inline-flex items-center gap-1.5 font-semibold text-primary transition hover:text-primary/80"
+          >
+            <Phone className="h-3.5 w-3.5" />
+            09638001122
+          </Link>
+          <nav
+            className="flex items-center gap-4 lg:gap-5"
+            aria-label="Quick links"
+          >
+            {TOP_LINKS.map(({ label, href, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex items-center gap-1 font-medium uppercase tracking-wide transition hover:text-primary"
+              >
+                <Icon className="h-3 w-3 opacity-70" />
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Main header */}
+      <header className="bg-primary text-white">
+        <div className="mx-auto w-full max-w-[95rem] px-3 py-2 sm:px-4 sm:py-2.5 lg:px-6">
+          {/* Mobile */}
+          <div className="flex items-center gap-2 lg:hidden">
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 shrink-0 text-white hover:bg-white/10 hover:text-white"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="size-9 shrink-0 text-white hover:bg-white/10"
+              onClick={() => {
+                setMobileMenuOpen((o) => !o);
+                setCategoryMenuOpen(false);
+              }}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
               {mobileMenuOpen ? (
-                <X className="h-[1.125rem] w-[1.125rem]" />
+                <X className="h-5 w-5" />
               ) : (
-                <Menu className="h-[1.125rem] w-[1.125rem]" />
+                <Menu className="h-5 w-5" />
               )}
             </Button>
 
@@ -185,41 +229,144 @@ export default function Header({
               <HeaderProductSearch />
             </div>
 
-            <HeaderActions
-              compareCount={compareCount}
-              wishlistCount={wishlistCount}
-              notificationCount={notificationCount}
-              displayUser={displayUser}
-              onLogout={() => setCurrentUser(null)}
-              onLoginSuccess={setCurrentUser}
+            <ActionPill
+              icon={ShoppingCart}
+              label="Cart"
+              badge={cartCount}
+              onClick={() => setCartSheetOpen(true)}
             />
           </div>
 
-          {/* Desktop layout: logo left · search center · actions right */}
-          <div className="hidden h-14 grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)] items-center gap-4 lg:grid">
-            <div className="flex items-center justify-start">
-              <BrandLogoLink logoSrc="/livewire.png" />
+          {/* Desktop: logo left · search center · actions right */}
+          <div className="hidden items-center gap-4 lg:grid lg:grid-cols-[auto_1fr_auto]">
+            <BrandLogoLink logoSrc="/livewire.png" className="shrink-0" />
+
+            <div className="flex min-w-0 justify-center px-2 xl:px-4">
+              <div className="w-full max-w-xl">
+                <HeaderProductSearch />
+              </div>
             </div>
 
-            <div className="mx-auto w-full max-w-2xl justify-self-center px-2">
-              <HeaderProductSearch />
+            <div className="flex shrink-0 flex-nowrap items-center justify-end gap-2">
+              <ActionPill
+                href="/offer/flash-sale"
+                icon={Gift}
+                label="Offer"
+              />
+              <ActionPill
+                href="/category/phones"
+                icon={Package}
+                label="Pre Order"
+              />
+              <ActionPill
+                icon={ShoppingCart}
+                label="Cart"
+                badge={cartCount}
+                onClick={() => setCartSheetOpen(true)}
+              />
+              {displayUser ? (
+                <UserProfilePill
+                  user={displayUser}
+                  onLogout={() => setCurrentUser(null)}
+                />
+              ) : (
+                <LoginModal onLoginSuccess={setCurrentUser}>
+                  <DialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-10 shrink-0 flex-nowrap items-center gap-1.5 whitespace-nowrap rounded-lg border border-secondary/70 bg-primary px-3 text-white transition hover:border-secondary hover:bg-primary/90"
+                    >
+                      <User className="h-4 w-4 shrink-0" strokeWidth={2} />
+                      <span className="text-[11px] font-bold uppercase leading-none tracking-wide">
+                        Login
+                      </span>
+                    </button>
+                  </DialogTrigger>
+                </LoginModal>
+              )}
             </div>
-
-            <HeaderActions
-              compareCount={compareCount}
-              wishlistCount={wishlistCount}
-              notificationCount={notificationCount}
-              displayUser={displayUser}
-              onLogout={() => setCurrentUser(null)}
-              onLoginSuccess={setCurrentUser}
-            />
           </div>
         </div>
       </header>
 
-      {mobileMenuOpen && (
-        <div className="absolute inset-x-0 top-full z-[60] max-h-[min(70vh,28rem)] overflow-y-auto border-t border-gray-100 bg-white px-3 py-3 shadow-lg lg:hidden">
-          <CategorySidebar isCollapsible embedded categories={categories} />
+      {/* Category navigation */}
+      <div className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex h-11 max-w-[95rem] items-center gap-2 px-3 sm:h-12 sm:px-4 lg:px-6">
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn(
+              'size-9 shrink-0 rounded-md border-slate-300 bg-white text-slate-700 hover:border-primary hover:bg-primary/5 hover:text-primary',
+              categoryMenuOpen && 'border-primary bg-primary/5 text-primary',
+            )}
+            onClick={() => {
+              setCategoryMenuOpen((o) => !o);
+              setMobileMenuOpen(false);
+            }}
+            aria-label="Browse categories"
+            aria-expanded={categoryMenuOpen}
+          >
+            {categoryMenuOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Menu className="h-4 w-4" />
+            )}
+          </Button>
+
+          <nav
+            className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none]"
+            aria-label="Product categories"
+          >
+            {NAV_CATEGORIES.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/category/${cat.slug}`}
+                className="group flex shrink-0 flex-col items-center gap-0.5 rounded-lg px-2 py-1 transition hover:bg-primary/5 sm:flex-row sm:gap-2 sm:px-3"
+              >
+                <div className="relative h-7 w-7 overflow-hidden rounded-md bg-slate-100 sm:h-8 sm:w-8">
+                  <Image
+                    src={cat.image}
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="h-full w-full object-contain p-0.5"
+                  />
+                </div>
+                <span className="max-w-[4.5rem] truncate text-[9px] font-bold uppercase tracking-wide text-slate-700 group-hover:text-primary sm:max-w-none sm:text-[11px]">
+                  {cat.name}
+                </span>
+              </Link>
+            ))}
+          </nav>
+
+          <Link
+            href="/offer/best-deals"
+            className="hidden shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-secondary transition hover:bg-primary/90 sm:inline-flex sm:text-xs"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Online Exclusive
+          </Link>
+        </div>
+      </div>
+
+      {/* Category mega menu / mobile menu */}
+      {(categoryMenuOpen || mobileMenuOpen) && (
+        <div className="absolute inset-x-0 top-full z-[60] max-h-[min(75vh,32rem)] overflow-y-auto border-t border-slate-200 bg-white shadow-xl">
+          <div className="mx-auto max-w-[95rem] px-3 py-4 sm:px-4 lg:px-6">
+            {mobileMenuOpen && !displayUser && (
+              <div className="mb-4 border-b border-slate-100 pb-4 lg:hidden">
+                <LoginModal onLoginSuccess={setCurrentUser}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-primary font-semibold hover:bg-primary/90">
+                      <User className="mr-2 h-4 w-4" />
+                      Sign In / Sign up
+                    </Button>
+                  </DialogTrigger>
+                </LoginModal>
+              </div>
+            )}
+            <CategorySidebar isCollapsible embedded categories={categories} />
+          </div>
         </div>
       )}
     </div>

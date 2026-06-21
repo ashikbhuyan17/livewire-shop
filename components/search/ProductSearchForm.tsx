@@ -168,16 +168,16 @@ export default function ProductSearchForm({
       </label>
       <div
         className={cn(
-          'group flex h-8 w-full items-stretch overflow-hidden rounded-full border border-white/25 bg-white shadow-[0_1px_6px_rgba(0,0,0,.06)] transition-all duration-200',
-          'focus-within:border-white focus-within:bg-white focus-within:shadow-[0_3px_14px_rgba(0,0,0,.1)]',
-          'md:h-9 md:rounded-lg lg:h-10',
+          'group flex h-9 w-full items-stretch overflow-hidden rounded-md border-0 bg-white shadow-sm transition-all duration-200',
+          'focus-within:shadow-md',
+          'md:h-10 lg:h-11',
         )}
       >
         <span
-          className="pointer-events-none flex shrink-0 items-center pl-2.5 text-gray-400 transition-colors duration-200 group-focus-within:text-headerBg md:pl-3"
+          className="pointer-events-none hidden shrink-0 items-center pl-3 text-gray-400 sm:flex"
           aria-hidden
         >
-          <Search className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={2} />
+          <Search className="h-4 w-4" strokeWidth={2} />
         </span>
         <Input
           ref={inputRef}
@@ -185,7 +185,7 @@ export default function ProductSearchForm({
           type="search"
           enterKeyHint="search"
           autoComplete="off"
-          placeholder="Search groceries, brands, deals…"
+          placeholder="Search products..."
           className="h-full min-w-0 flex-1 border-0 bg-transparent px-1.5 py-0 text-[13px] text-gray-900 shadow-none placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0 md:px-2 md:text-sm lg:text-[14px]"
           {...inputHandlers}
         />
@@ -193,16 +193,9 @@ export default function ProductSearchForm({
           type="submit"
           title="Search"
           aria-label="Search products"
-          className="flex shrink-0 items-center justify-center gap-1 bg-secondary px-2.5 text-black transition-colors hover:bg-[#f5cc00] active:bg-[#e6c200] md:px-3 lg:min-w-[4.5rem]"
+          className="flex shrink-0 items-center justify-center bg-secondary px-3 text-slate-900 transition-colors hover:bg-secondary/90 md:px-4 lg:min-w-[3.25rem]"
         >
-          <span className="hidden font-semibold tracking-tight sm:inline text-xs md:text-[13px]">
-            Search
-          </span>
-          <Search
-            className="h-3.5 w-3.5 sm:hidden"
-            strokeWidth={2.25}
-            aria-hidden
-          />
+          <Search className="h-4 w-4 md:h-[1.125rem] md:w-[1.125rem]" strokeWidth={2.25} aria-hidden />
         </button>
       </div>
     </form>

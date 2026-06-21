@@ -24,7 +24,7 @@ export default function HeaderProductSearch() {
     <Suspense
       fallback={
         <div
-          className="h-8 w-full animate-pulse rounded-full bg-white/30 md:h-9 lg:h-10"
+          className="h-9 w-full animate-pulse rounded-md bg-white/30 md:h-10 lg:h-11"
           aria-hidden
         />
       }
