@@ -1,4 +1,5 @@
 import CheckoutPageClient from '@/components/checkout/CheckoutClient';
+import { getCart } from '@/lib/cart';
 import { fetcher } from '@/lib/fetcher';
 import React from 'react';
 import type { Metadata } from 'next';
@@ -13,6 +14,7 @@ export const metadata: Metadata = buildPageMeta({
 });
 
 async function CheckoutPage() {
+  const initialCart = await getCart();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, vat, tax, profile]: [any, any, any, any] = await Promise.all([
     fetcher('/shipping-charge'),
@@ -23,6 +25,7 @@ async function CheckoutPage() {
 
   return (
     <CheckoutPageClient
+      initialCart={initialCart}
       vat={vat?.data?.rate}
       tax={tax?.data?.rate}
       shippingAreas={data}

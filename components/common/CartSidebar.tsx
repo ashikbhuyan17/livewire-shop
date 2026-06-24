@@ -14,9 +14,11 @@ import Image from 'next/image';
 import { Separator } from '../ui/separator';
 import { Button } from '../ui/button';
 import type { Cart } from '@/lib/cart';
+import { resolveCartImageSrc } from '@/lib/cart-image';
+import { formatBDTNumber } from '@/lib/home-demo-data';
 import { useCartStore } from '@/stores/cart-store';
 import UpdateCart from '@/components/product/UpdateCart';
-import { CURRENCY_SYMBOL, formatAmount } from '@/lib/currency';
+import { TkAmount } from '@/components/common/TkAmount';
 
 function CartSidebar({ initialCart }: { initialCart: Cart }) {
   const router = useRouter();
@@ -55,6 +57,7 @@ function CartSidebar({ initialCart }: { initialCart: Cart }) {
     useCartStore.getState().initFromServerCart(initialCart);
   }, [initialCart]);
 
+  const itemCount = cart.items.reduce((n, i) => n + i.qty, 0);
   const totalPrice = cart.items.reduce(
     (acc, item) => acc + item.price * item.qty,
     0,
@@ -76,46 +79,56 @@ function CartSidebar({ initialCart }: { initialCart: Cart }) {
       <SheetTrigger asChild>
         <button
           type="button"
-          aria-label={`Open cart, ${cart.items.length} lines, ${CURRENCY_SYMBOL}${formatAmount(totalPrice)}`}
-          className="fixed right-0 top-1/2 z-30 hidden w-[88px] min-w-[80px] -translate-y-1/2 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-l-2xl border border-amber-400/55 bg-gradient-to-b from-amber-100 to-amber-50 px-2 py-2.5 text-amber-950 shadow-lg shadow-amber-900/10 ring-1 ring-amber-900/5 transition-all duration-300 hover:scale-[1.02] hover:from-amber-200/80 hover:to-amber-100 hover:shadow-xl sm:flex"
+          aria-label={`Open cart, ${itemCount} items, ৳${formatBDTNumber(totalPrice)}`}
+          className="fixed right-0 top-1/2 z-30 hidden w-[88px] min-w-[80px] -translate-y-1/2 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-l-2xl border border-primary/20 bg-gradient-to-b from-primary to-primary/90 px-2 py-2.5 text-white shadow-lg shadow-primary/25 ring-1 ring-primary/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl sm:flex"
         >
           <div className="relative flex shrink-0 items-center justify-center">
-            <ShoppingBag className="h-5 w-5 text-amber-900" strokeWidth={2} />
-            <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F7941D] px-0.5 text-[9px] font-bold leading-none text-white shadow-sm">
-              {cart.items.length}
+            <ShoppingBag className="h-5 w-5 text-white" strokeWidth={2} />
+            <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-0.5 text-[9px] font-bold leading-none text-slate-900 shadow-sm">
+              {itemCount}
             </span>
           </div>
-          <span className="text-center text-xs font-bold leading-tight text-amber-900">
-            {cart.items.length} items
+          <span className="text-center text-xs font-bold leading-tight text-white/95">
+            {itemCount} items
           </span>
-          <span className="mt-0.5 flex w-full max-w-[calc(100%-4px)] justify-center rounded-md bg-[#2D7A27] px-1.5 py-1 shadow-sm">
-            <span className="text-sm font-bold tabular-nums leading-tight text-white">
-              <span className="font-extrabold text-sm">{CURRENCY_SYMBOL}</span>
-              {formatAmount(totalPrice)}
+          <span className="mt-0.5 flex w-full max-w-[calc(100%-4px)] justify-center rounded-md bg-secondary px-1.5 py-1 shadow-sm">
+            <span className="text-sm font-bold leading-tight text-slate-900">
+              <TkAmount amount={totalPrice} />
             </span>
           </span>
         </button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-md p-0">
-        <div className="h-full flex flex-col">
-          <SheetHeader className="px-5 pt-5 pb-3">
-            <SheetTitle className="font-bold text-lg">My Cart</SheetTitle>
+      <SheetContent
+        side="right"
+        className="w-full border-l border-slate-200 p-0 sm:max-w-md"
+      >
+        <div className="flex h-full flex-col bg-slate-50">
+          <SheetHeader className="border-b border-slate-200 bg-primary px-5 pb-4 pt-5 text-white">
+            <SheetTitle className="flex items-center gap-2 text-lg font-bold text-white">
+              <ShoppingBag className="h-5 w-5 text-secondary" />
+              My Cart
+              {itemCount > 0 ? (
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-bold text-slate-900">
+                  {itemCount}
+                </span>
+              ) : null}
+            </SheetTitle>
           </SheetHeader>
 
-          <div className="flex-1 overflow-auto px-4 pb-4">
+          <div className="flex-1 overflow-auto px-4 py-4">
             {cart.items.length === 0 ? (
-              <div className="rounded-xl border bg-white p-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
                 Your cart is currently empty.
               </div>
             ) : (
-              <div className="rounded-xl border bg-[#F6F7F8] overflow-hidden">
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 {cart.items.map((item, idx) => (
                   <div key={item.id}>
-                    <div className="flex items-center gap-2 sm:gap-3 p-4">
-                      <div className="h-12 w-12 shrink-0 rounded-lg bg-white grid place-items-center overflow-hidden">
+                    <div className="flex items-center gap-2 p-4 sm:gap-3">
+                      <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-50">
                         <Image
                           alt={item.name}
-                          src={`${process.env.NEXT_PUBLIC_IMG_URL}/${item.image}`}
+                          src={resolveCartImageSrc(item.image)}
                           width={96}
                           height={96}
                           className="h-10 w-10 object-contain"
@@ -123,12 +136,11 @@ function CartSidebar({ initialCart }: { initialCart: Cart }) {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-gray-900 line-clamp-2">
+                        <p className="line-clamp-2 text-sm font-semibold text-slate-900">
                           {item.name}
                         </p>
-                        <p className="text-sm text-gray-900 mt-0.5 font-semibold tabular-nums">
-                          <span className="font-extrabold text-sm">{CURRENCY_SYMBOL}</span>
-                          {formatAmount(item.price * item.qty)}
+                        <p className="mt-0.5 text-sm font-bold text-primary">
+                          <TkAmount amount={item.price * item.qty} />
                         </p>
                       </div>
 
@@ -136,13 +148,13 @@ function CartSidebar({ initialCart }: { initialCart: Cart }) {
                         <UpdateCart
                           cart={item}
                           variant="card"
-                          className="w-auto min-w-[9.75rem] max-w-[12.75rem]"
+                          className="w-auto min-w-[9rem] max-w-[12rem]"
                         />
                       </div>
                     </div>
                     {idx !== cart.items.length - 1 ? (
                       <div className="px-4">
-                        <Separator className="bg-black/10" />
+                        <Separator className="bg-slate-100" />
                       </div>
                     ) : null}
                   </div>
@@ -151,42 +163,35 @@ function CartSidebar({ initialCart }: { initialCart: Cart }) {
             )}
           </div>
 
-          <div className="px-4 pb-5 pt-3 border-t bg-white">
-            {/* Bill details */}
-            <div className="mb-3 rounded-xl border bg-[#F6F7F8] p-4">
-              <h3 className="font-semibold text-sm text-gray-900 mb-3">
+          <div className="border-t border-slate-200 bg-white px-4 pb-5 pt-3">
+            <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 className="mb-3 text-sm font-bold text-slate-900">
                 Bill details
               </h3>
-              <div className="space-y-2 text-sm text-gray-700">
+              <div className="space-y-2 text-sm text-slate-600">
                 <div className="flex items-center justify-between">
                   <span>Items total</span>
-                  <span className="font-bold text-gray-900">
-                    <span className="font-extrabold text-sm">{CURRENCY_SYMBOL}</span>
-                    {formatAmount(itemsTotal)}
+                  <span className="font-bold text-slate-900">
+                    <TkAmount amount={itemsTotal} />
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Delivery charge</span>
-                  <span className="font-bold text-gray-900">
-                    <span className="font-extrabold text-sm">{CURRENCY_SYMBOL}</span>{' '}
-                    {deliveryCharge}
+                  <span className="font-bold text-slate-900">
+                    <TkAmount amount={deliveryCharge} />
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Vat</span>
-                  <span className="font-bold text-gray-900">
-                    {' '}
-                    <span className="font-extrabold text-sm">{CURRENCY_SYMBOL}</span>
-                    {formatAmount(vat)}
+                  <span>VAT</span>
+                  <span className="font-bold text-slate-900">
+                    <TkAmount amount={vat} />
                   </span>
                 </div>
-                <Separator className="my-2 bg-black/10" />
-                <div className="flex items-center justify-between font-semibold text-gray-900">
+                <Separator className="my-2 bg-slate-200" />
+                <div className="flex items-center justify-between font-semibold text-slate-900">
                   <span>Grand total</span>
-                  <span className="font-bold text-gray-900">
-                    {' '}
-                    <span className="font-extrabold text-sm">{CURRENCY_SYMBOL}</span>
-                    {formatAmount(grandTotal)}
+                  <span className="text-base font-bold text-primary">
+                    <TkAmount amount={grandTotal} />
                   </span>
                 </div>
               </div>
@@ -194,9 +199,9 @@ function CartSidebar({ initialCart }: { initialCart: Cart }) {
 
             <Button
               type="button"
-              className="w-full h-10 text-sm font-semibold bg-[#F7941D] hover:bg-[#E88610] text-white disabled:opacity-80"
+              className="h-11 w-full rounded-lg bg-slate-900 text-sm font-bold uppercase text-secondary hover:bg-slate-800 disabled:opacity-80"
               size="default"
-              disabled={checkoutLoading}
+              disabled={checkoutLoading || cart.items.length === 0}
               onClick={() => {
                 if (pathname === '/checkout') {
                   setCartSheetOpen(false);

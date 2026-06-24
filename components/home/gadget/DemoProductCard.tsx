@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, ShoppingCart } from 'lucide-react';
@@ -7,7 +9,11 @@ import {
   discountPercent,
   formatBDTNumber,
 } from '@/lib/home-demo-data';
+import { demoProductToCartItem } from '@/lib/demo-cart';
+import { useCartStore } from '@/stores/cart-store';
+import UpdateCart from '@/components/product/UpdateCart';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 type DemoProductCardProps = {
   product: DemoProduct;
@@ -50,9 +56,21 @@ export default function DemoProductCard({
   product,
   variant = 'default',
 }: DemoProductCardProps) {
+  const addItem = useCartStore((s) => s.addItem);
+  const cart = useCartStore((s) => s.cart);
   const discount = discountPercent(product.price, product.originalPrice);
   const inStock = product.inStock !== false;
   const productHref = `/product/${product.slug}`;
+  const cartId = demoProductToCartItem(product).id;
+  const lineInCart = cart.items.find((item) => item.id === cartId);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!inStock) return;
+    addItem(demoProductToCartItem(product));
+    toast.success('Added to cart');
+  };
 
   return (
     <article
@@ -106,14 +124,19 @@ export default function DemoProductCard({
               View
             </Link>
           </Button>
-          <Button
-            size="sm"
-            disabled={!inStock}
-            className="h-9 flex-1 rounded-full bg-primary text-xs font-semibold shadow-sm hover:bg-primary/90"
-          >
-            <ShoppingCart className="h-3.5 w-3.5" />
-            {inStock ? 'Add to Cart' : 'Out of Stock'}
-          </Button>
+          {lineInCart ? (
+            <UpdateCart cart={lineInCart} variant="inline" className="h-9 flex-1" />
+          ) : (
+            <Button
+              size="sm"
+              disabled={!inStock}
+              onClick={handleAddToCart}
+              className="h-9 flex-1 rounded-full bg-primary text-xs font-semibold shadow-sm hover:bg-primary/90"
+            >
+              <ShoppingCart className="h-3.5 w-3.5" />
+              {inStock ? 'Add to Cart' : 'Out of Stock'}
+            </Button>
+          )}
         </div>
       </div>
     </article>

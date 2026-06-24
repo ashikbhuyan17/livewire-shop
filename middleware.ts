@@ -17,9 +17,9 @@ function isProtectedPath(pathname: string): boolean {
     pathname.startsWith('/account') ||
     pathname.startsWith('/user') ||
     pathname === '/wishlist' ||
-    pathname === '/compare' ||
-    pathname === '/cart' ||
-    pathname === '/checkout'
+    pathname === '/compare'
+    // pathname === '/cart' ||
+    // pathname === '/checkout'
   );
 }
 

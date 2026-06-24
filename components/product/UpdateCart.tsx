@@ -36,8 +36,8 @@ export default function UpdateCart({
       className={cn(
         'items-stretch overflow-hidden select-none',
         isCard
-          ? 'flex h-9 sm:h-10 w-full max-w-full rounded-full border border-amber-400/55 bg-gradient-to-b from-amber-100 to-amber-50 text-amber-950 shadow-sm ring-1 ring-amber-900/5'
-          : 'inline-flex h-8 shrink-0 rounded-md border bg-white',
+          ? 'flex h-9 w-full max-w-full rounded-full border border-primary/25 bg-gradient-to-b from-primary/5 to-white text-primary shadow-sm ring-1 ring-primary/10 sm:h-10'
+          : 'inline-flex h-8 shrink-0 rounded-full border border-primary/25 bg-white',
         className,
       )}
     >
@@ -55,19 +55,19 @@ export default function UpdateCart({
         className={cn(
           'grid shrink-0 place-items-center transition-colors',
           isCard
-            ? 'h-full w-10 sm:w-11 self-stretch text-amber-900 hover:bg-amber-200/65 active:bg-amber-200/90'
-            : 'h-8 w-8 text-gray-800 hover:bg-gray-50',
+            ? 'h-full w-9 self-stretch text-primary hover:bg-primary/10 active:bg-primary/15 sm:w-10'
+            : 'h-8 w-8 text-primary hover:bg-primary/5',
         )}
         aria-label="Decrease quantity"
       >
-        <Minus aria-hidden="true" size={isCard ? 18 : 16} strokeWidth={2.25} />
+        <Minus aria-hidden="true" size={isCard ? 16 : 14} strokeWidth={2.25} />
       </button>
       <span
         className={cn(
           'flex min-w-0 items-center justify-center text-center font-semibold tabular-nums',
           isCard
-            ? 'min-w-0 flex-1 px-1 text-[11px] sm:text-xs font-semibold leading-tight text-amber-950'
-            : 'w-9 shrink-0 text-sm text-gray-900',
+            ? 'min-w-0 flex-1 px-1 text-[11px] font-semibold leading-tight text-primary sm:text-xs'
+            : 'w-8 shrink-0 text-sm text-primary',
         )}
       >
         {isCard ? (
@@ -92,12 +92,12 @@ export default function UpdateCart({
         className={cn(
           'grid shrink-0 place-items-center transition-colors',
           isCard
-            ? 'h-full w-10 sm:w-11 self-stretch text-amber-900 hover:bg-amber-200/65 active:bg-amber-200/90 disabled:opacity-40 disabled:pointer-events-none'
-            : 'h-8 w-8 border-l text-gray-800 hover:bg-gray-50 disabled:opacity-40 disabled:pointer-events-none',
+            ? 'h-full w-9 self-stretch text-primary hover:bg-primary/10 active:bg-primary/15 disabled:pointer-events-none disabled:opacity-40 sm:w-10'
+            : 'h-8 w-8 border-l border-primary/15 text-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-40',
         )}
         aria-label="Increase quantity"
       >
-        <Plus aria-hidden="true" size={isCard ? 18 : 16} strokeWidth={2.25} />
+        <Plus aria-hidden="true" size={isCard ? 16 : 14} strokeWidth={2.25} />
       </button>
     </div>
   );

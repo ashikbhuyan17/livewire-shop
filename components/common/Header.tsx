@@ -156,8 +156,7 @@ export default function Header({
   const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserCookie | null>(user);
   const cart = useCartStore((s) => s.cart);
-  const setCartSheetOpen = useCartStore((s) => s.setCartSheetOpen);
-  const cartCount = cart.items.reduce((n, i) => n + i.qty, 0);
+  const cartCount = cart.items.length;
 
   useEffect(() => {
     setCurrentUser(user);
@@ -230,10 +229,10 @@ export default function Header({
             </div>
 
             <ActionPill
+              href="/cart"
               icon={ShoppingCart}
               label="Cart"
               badge={cartCount}
-              onClick={() => setCartSheetOpen(true)}
             />
           </div>
 
@@ -259,10 +258,10 @@ export default function Header({
                 label="Pre Order"
               />
               <ActionPill
+                href="/cart"
                 icon={ShoppingCart}
                 label="Cart"
                 badge={cartCount}
-                onClick={() => setCartSheetOpen(true)}
               />
               {displayUser ? (
                 <UserProfilePill

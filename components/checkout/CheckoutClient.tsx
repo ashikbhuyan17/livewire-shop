@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingBag, Phone, Package, Mail, Loader2 } from 'lucide-react';
+import { ShoppingBag, Phone, Package, Mail, Loader2, User, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -20,6 +20,8 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { placeOrder, type CheckoutOrderPayload } from '@/lib/fetcher';
+import type { Cart } from '@/lib/cart';
+import { resolveCartImageSrc } from '@/lib/cart-image';
 import { toast } from 'sonner';
 import { useCartStore } from '@/stores/cart-store';
 import UpdateCart from '@/components/product/UpdateCart';
@@ -37,10 +39,9 @@ import {
 } from '@/lib/reward-point-utils';
 import { cn } from '@/lib/utils';
 import { PENDING_CART_CLEAR_KEY } from '@/lib/pending-cart-clear';
+import { TkAmount } from '@/components/common/TkAmount';
 import {
-  CURRENCY_SYMBOL,
   calculateRateAmount,
-  formatAmount,
   formatRatePercent,
 } from '@/lib/currency';
 
@@ -81,11 +82,13 @@ function FieldGroup({
 }
 
 export default function CheckoutPageClient({
+  initialCart,
   shippingAreas,
   vat,
   tax,
   userProfile,
 }: {
+  initialCart: Cart;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   shippingAreas: any;
   vat: string | number;
@@ -93,9 +96,16 @@ export default function CheckoutPageClient({
   userProfile?: unknown;
 }) {
   const router = useRouter();
+  const didInitCart = useRef(false);
   const cart = useCartStore((s) => s.cart);
   const cartProducts = cart.items;
-  const itemCount = cartProducts.reduce((n, i) => n + i.qty, 0);
+  const itemCount = cartProducts.length;
+
+  useLayoutEffect(() => {
+    if (didInitCart.current) return;
+    didInitCart.current = true;
+    useCartStore.getState().initFromServerCart(initialCart);
+  }, [initialCart]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -285,7 +295,7 @@ export default function CheckoutPageClient({
           <Empty className="rounded-2xl border border-border/80 bg-card shadow-sm ring-1 ring-black/[0.03]">
             <EmptyHeader>
               <EmptyMedia>
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-headerBg/10 text-headerBg">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <ShoppingBag className="h-7 w-7" strokeWidth={1.75} />
                 </div>
               </EmptyMedia>
@@ -296,12 +306,19 @@ export default function CheckoutPageClient({
                 Add a few items and come back here to finish checkout.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
+            <EmptyContent className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               <Button
                 asChild
-                className="rounded-full bg-[#F7941D] px-6 font-semibold text-white shadow-md shadow-[#F7941D]/25 hover:bg-[#E88610]"
+                className="rounded-full bg-primary px-6 font-semibold text-white shadow-md hover:bg-primary/90"
               >
                 <Link href="/">Browse products</Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-full border-primary px-6 font-semibold text-primary hover:bg-primary/5"
+              >
+                <Link href="/cart">View cart</Link>
               </Button>
             </EmptyContent>
           </Empty>
@@ -319,17 +336,28 @@ export default function CheckoutPageClient({
               id="checkout-form"
               onSubmit={handleOrder}
               noValidate
-              className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm ring-1 ring-black/[0.03] sm:p-6"
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
             >
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground">
-                    Your details
-                  </h2>
-                  <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-                    We&apos;ll use this to contact you about delivery.
-                  </p>
-                  <div className="mt-4 flex flex-row flex-wrap gap-4">
+              <div className="space-y-6 p-4 sm:p-6">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-primary/[0.06] via-white to-secondary/[0.08]">
+                  <div className="border-b border-slate-200/80 bg-white/90 px-4 py-4 sm:px-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
+                        <User className="h-5 w-5" strokeWidth={2} />
+                      </div>
+                      <div>
+                        <h2 className="text-base font-bold tracking-tight text-slate-900 sm:text-lg">
+                          Your details
+                        </h2>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-500">
+                          We&apos;ll use this to contact you about delivery.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 p-4 sm:p-5">
+                  <div className="flex flex-row flex-wrap gap-4">
                     <div className="min-w-[12rem] flex-1 basis-[14rem]">
                       <FieldGroup
                         label="Full name"
@@ -346,7 +374,7 @@ export default function CheckoutPageClient({
                             setFormData({ ...formData, name: e.target.value })
                           }
                           aria-invalid={Boolean(errors.name)}
-                          className="h-11 rounded-xl border-border/90 bg-background"
+                          className="h-11 rounded-xl border-slate-200 bg-white focus-visible:ring-primary"
                         />
                       </FieldGroup>
                     </div>
@@ -377,7 +405,7 @@ export default function CheckoutPageClient({
                               })
                             }
                             aria-invalid={Boolean(errors.phone)}
-                            className="h-11 rounded-xl border-border/90 bg-background pl-10"
+                            className="h-11 rounded-xl border-slate-200 bg-white pl-10 focus-visible:ring-primary"
                           />
                         </div>
                       </FieldGroup>
@@ -406,14 +434,15 @@ export default function CheckoutPageClient({
                             setFormData({ ...formData, email: e.target.value })
                           }
                           aria-invalid={Boolean(errors.email)}
-                          className="h-11 rounded-xl border-border/90 bg-background pl-10"
+                          className="h-11 rounded-xl border-slate-200 bg-white pl-10 focus-visible:ring-primary"
                         />
                       </div>
                     </FieldGroup>
                   </div>
+                  </div>
                 </div>
 
-                <div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5">
                   <FieldGroup
                     label="Full address"
                     htmlFor="checkout-address"
@@ -430,7 +459,7 @@ export default function CheckoutPageClient({
                         setFormData({ ...formData, address: e.target.value })
                       }
                       aria-invalid={Boolean(errors.address)}
-                      className="min-h-[100px] resize-y rounded-xl border-border/90 bg-background text-base sm:text-sm"
+                      className="min-h-[100px] resize-y rounded-xl border-slate-200 bg-white text-base focus-visible:ring-primary sm:text-sm"
                     />
                   </FieldGroup>
                 </div>
@@ -452,24 +481,34 @@ export default function CheckoutPageClient({
                           customer_note: e.target.value,
                         })
                       }
-                      className="min-h-[80px] resize-y rounded-xl border-border/90 bg-background text-base sm:text-sm"
+                      className="min-h-[80px] resize-y rounded-xl border-slate-200 bg-white text-base focus-visible:ring-primary sm:text-sm"
                     />
                   </FieldGroup>
                 </div>
 
                 <Separator className="bg-border/70" />
 
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground">
-                    Delivery area
-                  </h2>
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <div className="flex items-start gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 sm:px-5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <MapPin className="h-5 w-5" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold tracking-tight text-slate-900">
+                        Delivery area
+                      </h2>
+                      <p className="mt-0.5 text-sm text-slate-500">
+                        Choose your zone to see the delivery fee.
+                      </p>
+                    </div>
+                  </div>
                   {errors.delivery ? (
-                    <p className="mt-2 text-sm text-destructive" role="alert">
+                    <p className="px-4 pt-3 text-sm text-destructive sm:px-5" role="alert">
                       {errors.delivery}
                     </p>
                   ) : null}
 
-                  <div className="mt-4 space-y-3">
+                  <div className="space-y-3 p-4 sm:p-5">
                     <p id="checkout-delivery-area-label" className="sr-only">
                       Select delivery zone. Delivery zone and fee.
                     </p>
@@ -487,10 +526,10 @@ export default function CheckoutPageClient({
                             key={area.id}
                             htmlFor={`checkout-area-${area.id}`}
                             className={cn(
-                              'flex  flex-1  cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors  sm:p-4',
+                              'flex flex-1 cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-all sm:p-4',
                               isSelected
-                                ? 'border-headerBg bg-headerBg/[0.06]'
-                                : 'border-border/80 bg-muted/10 hover:border-border',
+                                ? 'border-primary bg-primary/5 ring-1 ring-primary/20 shadow-sm'
+                                : 'border-slate-200 bg-slate-50/80 hover:border-primary/30 hover:bg-white',
                             )}
                           >
                             <Checkbox
@@ -517,18 +556,17 @@ export default function CheckoutPageClient({
                                   deliveryAreaId: fallback.id,
                                 }));
                               }}
-                              className="mt-1 border-headerBg data-[state=checked]:border-headerBg data-[state=checked]:bg-headerBg"
+                              className="mt-1 border-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                             />
                             <span className="min-w-0 flex-1">
-                              <span className="font-semibold text-foreground">
+                              <span className="font-semibold text-slate-900">
                                 {area.area_name}
                               </span>
-                              <span className="mt-0.5 block text-sm tabular-nums text-muted-foreground">
+                              <span className="mt-1 block text-sm text-slate-500">
                                 Delivery fee:{' '}
-                                <span className="font-extrabold">
-                                  {CURRENCY_SYMBOL}
+                                <span className="font-semibold text-primary">
+                                  <TkAmount amount={Number(area.delivery_charge)} />
                                 </span>
-                                {formatAmount(Number(area.delivery_charge))}
                               </span>
                             </span>
                           </label>
@@ -538,28 +576,23 @@ export default function CheckoutPageClient({
                   </div>
                 </div>
 
-                <Separator className="bg-border/70" />
+                <Separator className="bg-slate-200" />
 
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground">
-                    Payment
-                  </h2>
-                  <div className="mt-4 rounded-xl border border-headerBg bg-headerBg/[0.06] p-4">
-                    <p className="font-semibold text-foreground">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                  <h2 className="text-base font-bold text-slate-900">Payment</h2>
+                  <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                    <p className="font-semibold text-slate-900">
                       Cash on delivery
-                      <span className="ml-2 rounded-full bg-secondary/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-secondary-foreground">
+                      <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900">
                         Popular
                       </span>
                     </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm text-slate-600">
                       {useRewardPoints && dueAmount > 0 ? (
                         <>
                           Pay{' '}
-                          <span className="font-semibold tabular-nums text-foreground">
-                            <span className="font-extrabold">
-                              {CURRENCY_SYMBOL}
-                            </span>
-                            {formatAmount(dueAmount)}
+                          <span className="font-semibold text-primary">
+                            <TkAmount amount={dueAmount} />
                           </span>{' '}
                           on delivery — the rest is covered by reward points.
                         </>
@@ -577,15 +610,15 @@ export default function CheckoutPageClient({
 
           <aside className="min-w-0">
             <div className="lg:sticky lg:top-28">
-              <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_12px_40px_-12px_rgba(45,122,39,0.18),0_4px_16px_-4px_rgba(0,0,0,0.08)]">
-                <div className="relative border-b border-headerBg/20 bg-gradient-to-br from-headerBg/[0.16] via-headerBg/[0.07] to-transparent px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg shadow-primary/5">
+                <div className="relative border-b border-primary/15 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
                   <div
-                    className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-headerBg/80 via-headerBg/50 to-headerBg/20"
+                    className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-secondary"
                     aria-hidden
                   />
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/90 text-headerBg shadow-sm ring-1 ring-headerBg/15">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-primary shadow-sm ring-1 ring-primary/15">
                         <Package
                           className="h-5 w-5"
                           strokeWidth={2}
@@ -593,19 +626,19 @@ export default function CheckoutPageClient({
                         />
                       </div>
                       <div className="min-w-0 pt-0.5">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-headerBg/90">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
                           Review &amp; confirm
                         </p>
-                        <h2 className="text-lg font-bold leading-tight tracking-tight text-foreground sm:text-xl">
+                        <h2 className="text-lg font-bold leading-tight tracking-tight text-slate-900 sm:text-xl">
                           Order summary
                         </h2>
                       </div>
                     </div>
-                    <span className="inline-flex shrink-0 flex-col items-center justify-center rounded-xl bg-white/95 px-2.5 py-1.5 text-center shadow-sm ring-1 ring-headerBg/20">
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span className="inline-flex shrink-0 flex-col items-center justify-center rounded-xl bg-white px-2.5 py-1.5 text-center shadow-sm ring-1 ring-primary/15">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                         Items
                       </span>
-                      <span className="text-base font-bold tabular-nums leading-none text-headerBg">
+                      <span className="text-base font-bold leading-none text-primary">
                         {itemCount}
                       </span>
                     </span>
@@ -623,7 +656,7 @@ export default function CheckoutPageClient({
                               <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-white bg-white shadow-sm ring-1 ring-border/40 sm:h-12 sm:w-12">
                                 <Image
                                   alt={item.name}
-                                  src={`${process.env.NEXT_PUBLIC_IMG_URL}/${item.image}`}
+                                  src={resolveCartImageSrc(item.image)}
                                   width={112}
                                   height={112}
                                   className="h-full w-full object-contain p-1"
@@ -633,12 +666,9 @@ export default function CheckoutPageClient({
                                 <p className="text-sm font-semibold leading-snug text-foreground line-clamp-2">
                                   {item.name}
                                 </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground sm:text-[13px]">
-                                  <span className="font-extrabold">
-                                    {CURRENCY_SYMBOL}
-                                  </span>
-                                  {formatAmount(item.price)}
-                                  <span className="text-muted-foreground/80">
+                                <p className="mt-0.5 text-xs text-slate-500 sm:text-[13px]">
+                                  <TkAmount amount={item.price} />
+                                  <span className="text-slate-400">
                                     {' '}
                                     × {item.qty}
                                   </span>
@@ -651,11 +681,8 @@ export default function CheckoutPageClient({
                             </div>
                             {/* total price — 20% on sm+; row 1 col 2 on mobile (same row as product) */}
                             <div className="col-start-2 row-start-1 flex min-w-0 w-full items-center justify-end sm:col-start-auto sm:row-start-auto">
-                              <span className="inline-block text-center text-sm font-bold tabular-nums leading-snug text-foreground">
-                                <span className="font-extrabold">
-                                  {CURRENCY_SYMBOL}
-                                </span>
-                                {formatAmount(item.price * item.qty)}
+                              <span className="inline-block text-sm font-bold text-primary">
+                                <TkAmount amount={item.price * item.qty} />
                               </span>
                             </div>
                           </div>
@@ -676,18 +703,12 @@ export default function CheckoutPageClient({
                   <dl className="space-y-0 rounded-xl border border-border/50 bg-white/80 px-3 py-1 shadow-sm dark:bg-card/60">
                     {(
                       [
-                        ['Subtotal', formatAmount(subtotal)],
-                        [
-                          `VAT (${formatRatePercent(vat)}%)`,
-                          formatAmount(vatAmount),
-                        ],
-                        [
-                          `Tax (${formatRatePercent(tax)}%)`,
-                          formatAmount(taxAmount),
-                        ],
-                        ['Delivery', formatAmount(deliveryCharge)],
+                        ['Subtotal', subtotal],
+                        [`VAT (${formatRatePercent(vat)}%)`, vatAmount],
+                        [`Tax (${formatRatePercent(tax)}%)`, taxAmount],
+                        ['Delivery', deliveryCharge],
                       ] as const
-                    ).map(([label, value], i) => (
+                    ).map(([label, amount], i) => (
                       <div
                         key={label}
                         className={cn(
@@ -695,12 +716,9 @@ export default function CheckoutPageClient({
                           i > 0 && 'border-t border-dashed border-border/60',
                         )}
                       >
-                        <dt className="text-muted-foreground">{label}</dt>
-                        <dd className="font-semibold tabular-nums text-foreground">
-                          <span className="font-extrabold">
-                            {CURRENCY_SYMBOL}
-                          </span>
-                          {value}
+                        <dt className="text-slate-500">{label}</dt>
+                        <dd className="font-semibold text-slate-900">
+                          <TkAmount amount={amount} />
                         </dd>
                       </div>
                     ))}
@@ -732,12 +750,8 @@ export default function CheckoutPageClient({
                         <span className="font-medium text-emerald-700 dark:text-emerald-400">
                           {formatCouponBillLabel(appliedCoupon)}
                         </span>
-                        <span className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                          −
-                          <span className="font-extrabold">
-                            {CURRENCY_SYMBOL}
-                          </span>
-                          {formatAmount(couponDiscount)}
+                        <span className="font-semibold text-emerald-700">
+                          −<TkAmount amount={couponDiscount} />
                         </span>
                       </div>
                     ) : null}
@@ -747,12 +761,8 @@ export default function CheckoutPageClient({
                         <span className="font-medium text-amber-800 dark:text-amber-300">
                           Reward points
                         </span>
-                        <span className="font-semibold tabular-nums text-amber-800 dark:text-amber-300">
-                          −
-                          <span className="font-extrabold">
-                            {CURRENCY_SYMBOL}
-                          </span>
-                          {formatAmount(pointDiscount)}
+                        <span className="font-semibold text-amber-800">
+                          −<TkAmount amount={pointDiscount} />
                         </span>
                       </div>
                     ) : null}
@@ -765,29 +775,20 @@ export default function CheckoutPageClient({
                             : 'Total due'
                           : 'Total'}
                       </span>
-                      <span className="tabular-nums font-bold text-foreground">
-                        <span className="font-extrabold">
-                          {CURRENCY_SYMBOL}
-                        </span>
-                        {formatAmount(dueAmount)}
+                      <span className="font-bold text-primary">
+                        <TkAmount amount={dueAmount} />
                       </span>
                     </div>
                     {useRewardPoints && pointDiscount > 0 && dueAmount > 0 ? (
                       <p className="-mt-1 pb-1 text-center text-[11px] text-muted-foreground">
                         Order total{' '}
-                        <span className="font-semibold tabular-nums">
-                          <span className="font-extrabold">
-                            {CURRENCY_SYMBOL}
-                          </span>
-                          {formatAmount(grandTotal)}
+                        <span className="font-semibold">
+                          <TkAmount amount={grandTotal} />
                         </span>
                         {' · '}
                         points cover{' '}
-                        <span className="font-semibold tabular-nums text-amber-800 dark:text-amber-300">
-                          <span className="font-extrabold">
-                            {CURRENCY_SYMBOL}
-                          </span>
-                          {formatAmount(pointDiscount)}
+                        <span className="font-semibold text-amber-800">
+                          <TkAmount amount={pointDiscount} />
                         </span>
                       </p>
                     ) : null}
@@ -798,7 +799,7 @@ export default function CheckoutPageClient({
                     form="checkout-form"
                     size="lg"
                     disabled={isSubmitting}
-                    className="mt-4 h-11 w-full rounded-lg bg-[#F7941D] px-6 text-sm font-semibold text-white hover:bg-[#E88610]"
+                    className="mt-4 h-11 w-full rounded-lg bg-slate-900 text-sm font-bold uppercase text-secondary hover:bg-slate-800"
                   >
                     {isSubmitting ? (
                       <>
@@ -809,7 +810,9 @@ export default function CheckoutPageClient({
                         Placing order…
                       </>
                     ) : dueAmount > 0 ? (
-                      `Place order · ${CURRENCY_SYMBOL}${formatAmount(dueAmount)} due`
+                      <span className="inline-flex items-center gap-1">
+                        Place order · <TkAmount amount={dueAmount} /> due
+                      </span>
                     ) : (
                       'Place order'
                     )}

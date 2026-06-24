@@ -1,18 +1,15 @@
-import Link from 'next/link';
+import { getCart } from '@/lib/cart';
+import CartPageClient from '@/components/cart/CartPageClient';
+import type { Metadata } from 'next';
+import { SITE_BRAND_SHORT, buildPageMeta } from '@/lib/site';
 
-export default function CartPage() {
-  return (
-    <main className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="text-2xl font-bold text-foreground">Your cart</h1>
-      <p className="mt-3 text-muted-foreground">
-        Use the bag icon in the header to view and edit items in your bag.
-      </p>
-      <Link
-        href="/"
-        className="mt-6 inline-block font-medium text-primary hover:underline"
-      >
-        Continue shopping
-      </Link>
-    </main>
-  );
+export const metadata: Metadata = buildPageMeta({
+  title: 'Shopping Cart',
+  description: `Review items in your ${SITE_BRAND_SHORT} shopping cart.`,
+  pathname: '/cart',
+});
+
+export default async function CartPage() {
+  const initialCart = await getCart();
+  return <CartPageClient initialCart={initialCart} />;
 }

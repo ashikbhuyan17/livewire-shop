@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Eye,
   GitCompareArrows,
@@ -18,10 +19,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { STATIC_PRODUCT, formatProductPrice, type ProductColorId, type ProductVariantId } from '@/lib/product-demo-data';
+import { staticProductToCartItem } from '@/lib/demo-cart';
+import { useCartStore } from '@/stores/cart-store';
+import UpdateCart from '@/components/product/UpdateCart';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function ProductPurchasePanel() {
+  const router = useRouter();
+  const addItem = useCartStore((s) => s.addItem);
+  const cart = useCartStore((s) => s.cart);
   const [colorId, setColorId] = useState<ProductColorId>(STATIC_PRODUCT.colors[0].id);
   const [variantId, setVariantId] = useState<ProductVariantId>(STATIC_PRODUCT.variants[0].id);
   const [priceType, setPriceType] = useState<'offer' | 'regular'>('offer');
@@ -57,6 +64,29 @@ export default function ProductPurchasePanel() {
     } catch {
       toast.error('Could not copy link');
     }
+  };
+
+  const buildCartItem = () =>
+    staticProductToCartItem(colorId, variantId, basePrice);
+
+  const lineInCart = cart.items.find((item) => item.id === STATIC_PRODUCT.id);
+
+  const handleAddToCart = () => {
+    if (!agreedTerms) {
+      toast.error('Please agree to Terms & Conditions');
+      return;
+    }
+    addItem(buildCartItem());
+    toast.success('Added to cart');
+  };
+
+  const handleBuyNow = () => {
+    if (!agreedTerms) {
+      toast.error('Please agree to Terms & Conditions');
+      return;
+    }
+    addItem(buildCartItem());
+    router.push('/cart');
   };
 
   return (
@@ -288,17 +318,23 @@ export default function ProductPurchasePanel() {
 
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
-        <Button
-          variant="outline"
-          className="h-11 rounded-lg border-slate-900 bg-slate-900 text-sm font-bold uppercase text-white hover:bg-slate-800"
-          disabled={!agreedTerms}
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Add to Cart
-        </Button>
+        {lineInCart ? (
+          <UpdateCart cart={lineInCart} variant="card" className="h-11" />
+        ) : (
+          <Button
+            variant="outline"
+            className="h-11 rounded-lg border-slate-900 bg-slate-900 text-sm font-bold uppercase text-white hover:bg-slate-800"
+            disabled={!agreedTerms}
+            onClick={handleAddToCart}
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Add to Cart
+          </Button>
+        )}
         <Button
           className="h-11 rounded-lg bg-secondary text-sm font-bold uppercase text-slate-900 hover:bg-secondary/90"
           disabled={!agreedTerms}
+          onClick={handleBuyNow}
         >
           Buy Now
         </Button>
