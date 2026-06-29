@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        headerBg: '#0250A2',
+        headerBg: '#2563EB',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -22,7 +22,7 @@ const config: Config = {
           foreground: 'hsl(var(--popover-foreground))',
         },
         primary: {
-          DEFAULT: '#0250A2',
+          DEFAULT: '#2563EB',
           foreground: '#ffffff',
         },
         secondary: {

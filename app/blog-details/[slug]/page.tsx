@@ -1,59 +1,49 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import BlogDetailView from '@/components/blog/BlogDetailView';
+import BlogDetailDemo from '@/components/blog/BlogDetailDemo';
 import { buildPageMeta } from '@/lib/site';
-import {
-  blogDetailHref,
-  fetchBlogBySlug,
-  resolveBlogImage,
-} from '@/lib/blogs';
+import { DEMO_BLOGS, getBlogBySlug } from '@/lib/pages-demo-data';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+export function generateStaticParams() {
+  return DEMO_BLOGS.map((b) => ({ slug: b.slug }));
+}
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const res = await fetchBlogBySlug(slug);
-  const blog = res?.status === true ? res.data : null;
+  const blog = getBlogBySlug(slug);
 
   if (!blog) {
     return buildPageMeta({
       title: 'Article not found',
       description: 'The requested blog article could not be found.',
-      pathname: blogDetailHref(slug),
+      pathname: `/blog-details/${slug}`,
     });
   }
 
   return buildPageMeta({
-    title: blog.meta_title?.trim() || blog.title,
-    description:
-      blog.meta_description?.trim() ||
-      blog.short_description?.trim() ||
-      `Read ${blog.title} on BestFood City.`,
-    pathname: blogDetailHref(slug),
-    keywords: blog.meta_keywords
-      ?.split(',')
-      .map((k) => k.trim())
-      .filter(Boolean),
-    ogImage: resolveBlogImage(blog.meta_image ?? blog.image),
+    title: blog.title,
+    description: blog.excerpt,
+    pathname: `/blog-details/${slug}`,
+    keywords: [blog.category, 'blog', 'Livewire'],
+    ogImage: blog.image,
   });
 }
 
 export default async function BlogDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  if (!slug?.trim()) notFound();
+  const blog = getBlogBySlug(slug);
 
-  const res = await fetchBlogBySlug(slug);
-  const blog = res?.status === true ? res.data : null;
-
-  if (!blog || String(blog.status ?? '1') !== '1') notFound();
+  if (!blog) notFound();
 
   return (
-    <main className="min-h-screen bg-white">
-      <BlogDetailView blog={blog} />
+    <main className="min-h-screen bg-slate-50/60">
+      <BlogDetailDemo blog={blog} />
     </main>
   );
 }

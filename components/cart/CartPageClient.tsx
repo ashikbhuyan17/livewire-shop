@@ -192,8 +192,8 @@ export default function CartPageClient({ initialCart }: { initialCart: Cart }) {
                   </div>
                 </div>
 
-                <div className="mt-5 space-y-4">
-                  <div>
+                <div className="mt-5 flex flex-col gap-4 lg:flex-row">
+                  <div className="lg:flex-1">
                     <label
                       htmlFor="cart-promo-code"
                       className="mb-2 block text-[11px] font-bold uppercase tracking-wide text-slate-500"
@@ -218,7 +218,7 @@ export default function CartPageClient({ initialCart }: { initialCart: Cart }) {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="lg:flex-1">
                     <label
                       htmlFor="cart-gift-voucher"
                       className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500"
@@ -262,12 +262,19 @@ export default function CartPageClient({ initialCart }: { initialCart: Cart }) {
                   </div>
                 </div>
 
-                <div className="mt-6 flex flex-col gap-3">
+                <div className="mt-6 flex flex-col gap-3 lg:flex-row">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-12 w-full rounded-xl border-primary/25 bg-white text-sm font-bold uppercase text-primary hover:border-primary hover:bg-primary/5 lg:flex-1"
+                  >
+                    <Link href="/">Continue Shopping</Link>
+                  </Button>
                   <Button
                     type="button"
                     onClick={handleCheckout}
                     disabled={checkoutLoading}
-                    className="group h-12 w-full rounded-xl bg-slate-900 text-sm font-bold uppercase text-secondary shadow-md transition hover:bg-slate-800"
+                    className="group h-12 w-full rounded-xl bg-slate-900 text-sm font-bold uppercase text-secondary shadow-md transition hover:bg-slate-800 lg:flex-1"
                   >
                     {checkoutLoading ? (
                       <>
@@ -280,13 +287,6 @@ export default function CartPageClient({ initialCart }: { initialCart: Cart }) {
                         <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5" />
                       </>
                     )}
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="h-12 w-full rounded-xl border-primary/25 bg-white text-sm font-bold uppercase text-primary hover:border-primary hover:bg-primary/5"
-                  >
-                    <Link href="/">Continue Shopping</Link>
                   </Button>
                 </div>
               </div>

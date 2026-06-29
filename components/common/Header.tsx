@@ -32,7 +32,7 @@ import { useCartStore } from '@/stores/cart-store';
 import { cn } from '@/lib/utils';
 
 const TOP_LINKS = [
-  { label: 'Order Tracking', href: '/user/orders', icon: PackageCheck },
+  { label: 'Order Tracking', href: '/order-tracking', icon: PackageCheck },
   { label: 'Blogs', href: '/blogs', icon: FileText },
   { label: 'EMI Policy', href: '/pages/emi-policy', icon: CreditCard },
   { label: 'Store Location', href: '/our-outlets', icon: MapPin },
@@ -205,23 +205,6 @@ export default function Header({
         <div className="mx-auto w-full max-w-[95rem] px-3 py-2 sm:px-4 sm:py-2.5 lg:px-6">
           {/* Mobile */}
           <div className="flex items-center gap-2 lg:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-9 shrink-0 text-white hover:bg-white/10"
-              onClick={() => {
-                setMobileMenuOpen((o) => !o);
-                setCategoryMenuOpen(false);
-              }}
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
-
             <BrandLogoLink logoSrc="/livewire.png" className="shrink-0" />
 
             <div className="min-w-0 flex-1">
@@ -253,7 +236,7 @@ export default function Header({
                 label="Offer"
               />
               <ActionPill
-                href="/category/phones"
+                href="/pre-order"
                 icon={Package}
                 label="Pre Order"
               />

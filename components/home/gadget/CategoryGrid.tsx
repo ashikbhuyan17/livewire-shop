@@ -16,7 +16,7 @@ export default function CategoryGrid() {
           Shop by Categories
         </h2>
         <Link
-          href="/category/phones"
+          href="/categories"
           className="shrink-0 rounded-md border-2 border-primary bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary transition hover:bg-primary hover:text-white sm:px-4 sm:py-2 sm:text-xs"
         >
           See all

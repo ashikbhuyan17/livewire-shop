@@ -207,7 +207,7 @@ export default function ProductPurchasePanel() {
       </div>
 
       {/* Info cards */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {[
           {
             icon: Wallet,
@@ -246,7 +246,7 @@ export default function ProductPurchasePanel() {
       </div>
 
       {/* Price options */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2">
         {[
           { id: 'offer' as const, label: 'Offer Price', amount: variant.price },
           { id: 'regular' as const, label: 'Regular Price', amount: variant.regularPrice },

@@ -32,7 +32,7 @@ export default function ProductDetailDemo() {
         <div className="lg:sticky lg:top-[calc(9.75rem+5px)] lg:z-20 lg:self-start">
           <ProductGallery />
         </div>
-        <div className="lg:sticky lg:top-[calc(9.75rem+5px)] lg:z-20 lg:max-h-[calc(100vh-9.75rem-5px)] lg:self-start lg:overflow-y-auto lg:overscroll-y-contain lg:pr-1 [-ms-overflow-style:auto] [scrollbar-gutter:stable] [scrollbar-width:thin] [scrollbar-color:hsl(var(--muted-foreground)/0.35)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30">
+        <div>
           <ProductPurchasePanel />
         </div>
       </div>
