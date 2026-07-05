@@ -1,49 +1,52 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import BlogDetailDemo from '@/components/blog/BlogDetailDemo';
+import {
+  blogDetailHref,
+  fetchBlogBySlug,
+  fetchRelatedPosts,
+} from '@/lib/livewire-blogs';
 import { buildPageMeta } from '@/lib/site';
-import { DEMO_BLOGS, getBlogBySlug } from '@/lib/pages-demo-data';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return DEMO_BLOGS.map((b) => ({ slug: b.slug }));
-}
-
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const blog = getBlogBySlug(slug);
+  const blog = await fetchBlogBySlug(slug);
 
   if (!blog) {
     return buildPageMeta({
       title: 'Article not found',
       description: 'The requested blog article could not be found.',
-      pathname: `/blog-details/${slug}`,
+      pathname: blogDetailHref(slug),
     });
   }
 
   return buildPageMeta({
     title: blog.title,
     description: blog.excerpt,
-    pathname: `/blog-details/${slug}`,
-    keywords: [blog.category, 'blog', 'Livewire'],
-    ogImage: blog.image,
+    pathname: blogDetailHref(slug),
+    keywords: ['blog', 'Livewire'],
+    ogImage: blog.image || undefined,
   });
 }
 
 export default async function BlogDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const blog = getBlogBySlug(slug);
+  const [blog, relatedPosts] = await Promise.all([
+    fetchBlogBySlug(slug),
+    fetchRelatedPosts(slug),
+  ]);
 
   if (!blog) notFound();
 
   return (
     <main className="min-h-screen bg-slate-50/60">
-      <BlogDetailDemo blog={blog} />
+      <BlogDetailDemo blog={blog} relatedPosts={relatedPosts} />
     </main>
   );
 }

@@ -19,7 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
-import CategorySidebar from './CategorySidebar';
+import CategoryMegaMenu from './CategoryMegaMenu';
 import { usePathname, useRouter } from 'next/navigation';
 import LoginModal from './LoginModal';
 import { DialogTrigger } from '../ui/dialog';
@@ -27,8 +27,12 @@ import { clearAuth } from '@/action/token';
 import type { UserCookie } from '@/action/token';
 import BrandLogoLink from './BrandLogoLink';
 import HeaderProductSearch from '@/components/search/HeaderProductSearch';
-import { CATEGORIES } from '@/lib/home-demo-data';
+import type {
+  CategoryMenuItem,
+  HeaderCategoryItem,
+} from '@/fetch/buildCategoryMenu';
 import { useCartStore } from '@/stores/cart-store';
+import { useCategoryDrawerStore } from '@/stores/category-drawer-store';
 import { cn } from '@/lib/utils';
 
 const TOP_LINKS = [
@@ -38,7 +42,13 @@ const TOP_LINKS = [
   { label: 'Store Location', href: '/our-outlets', icon: MapPin },
 ] as const;
 
-const NAV_CATEGORIES = CATEGORIES.slice(0, 8);
+function resolveCategoryImage(icon?: string): string {
+  const rel = (icon || '').trim().replace(/^\/+/, '');
+  if (!rel) return '';
+  if (rel.startsWith('http://') || rel.startsWith('https://')) return rel;
+  const base = (process.env.NEXT_PUBLIC_IMG_URL || '').replace(/\/+$/, '');
+  return base ? `${base}/${rel}` : `/${rel}`;
+}
 
 function UserProfilePill({
   user,
@@ -131,7 +141,12 @@ function ActionPill({
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={pillClass} aria-label={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={pillClass}
+        aria-label={label}
+      >
         {inner}
       </button>
     );
@@ -146,10 +161,11 @@ function ActionPill({
 
 export default function Header({
   categories,
+  headerCategories,
   user,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  categories: any;
+  categories: CategoryMenuItem[];
+  headerCategories: HeaderCategoryItem[];
   user: UserCookie | null;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -157,6 +173,11 @@ export default function Header({
   const [currentUser, setCurrentUser] = useState<UserCookie | null>(user);
   const cart = useCartStore((s) => s.cart);
   const cartCount = cart.items.length;
+  const categoryDrawerOpen = useCategoryDrawerStore((s) => s.open);
+  const setCategoryDrawerOpen = useCategoryDrawerStore((s) => s.setOpen);
+  const toggleCategoryDrawer = useCategoryDrawerStore((s) => s.toggle);
+
+  const isCategoryPanelOpen = categoryMenuOpen || categoryDrawerOpen;
 
   useEffect(() => {
     setCurrentUser(user);
@@ -168,12 +189,13 @@ export default function Header({
   useEffect(() => {
     setMobileMenuOpen(false);
     setCategoryMenuOpen(false);
-  }, [pathname]);
+    setCategoryDrawerOpen(false);
+  }, [pathname, setCategoryDrawerOpen]);
 
   return (
     <div className="fixed left-0 right-0 top-0 z-50 shadow-md">
-      {/* Top utility bar */}
-      <div className="hidden border-b border-slate-200 bg-white sm:block">
+      {/* Top utility bar — desktop only */}
+      <div className="hidden border-b border-slate-200 bg-white lg:block">
         <div className="mx-auto flex h-9 max-w-[95rem] items-center justify-between px-4 text-xs text-slate-600 lg:px-6">
           <Link
             href="tel:09638001122"
@@ -230,16 +252,8 @@ export default function Header({
             </div>
 
             <div className="flex shrink-0 flex-nowrap items-center justify-end gap-2">
-              <ActionPill
-                href="/offer/flash-sale"
-                icon={Gift}
-                label="Offer"
-              />
-              <ActionPill
-                href="/pre-order"
-                icon={Package}
-                label="Pre Order"
-              />
+              <ActionPill href="/offer/flash-sale" icon={Gift} label="Offer" />
+              <ActionPill href="/pre-order" icon={Package} label="Pre Order" />
               <ActionPill
                 href="/cart"
                 icon={ShoppingCart}
@@ -271,24 +285,33 @@ export default function Header({
         </div>
       </header>
 
-      {/* Category navigation */}
-      <div className="border-b border-slate-200 bg-white">
+      {/* Category navigation — desktop only; mobile uses bottom nav */}
+      <div className="hidden border-b border-slate-200 bg-white lg:block">
         <div className="mx-auto flex h-11 max-w-[95rem] items-center gap-2 px-3 sm:h-12 sm:px-4 lg:px-6">
           <Button
             variant="outline"
             size="icon"
             className={cn(
               'size-9 shrink-0 rounded-md border-slate-300 bg-white text-slate-700 hover:border-primary hover:bg-primary/5 hover:text-primary',
-              categoryMenuOpen && 'border-primary bg-primary/5 text-primary',
+              isCategoryPanelOpen && 'border-primary bg-primary/5 text-primary',
             )}
             onClick={() => {
-              setCategoryMenuOpen((o) => !o);
+              const isDesktop = window.matchMedia(
+                '(min-width: 1024px)',
+              ).matches;
+              if (isDesktop) {
+                setCategoryMenuOpen((open) => !open);
+                setCategoryDrawerOpen(false);
+              } else {
+                toggleCategoryDrawer();
+                setCategoryMenuOpen(false);
+              }
               setMobileMenuOpen(false);
             }}
             aria-label="Browse categories"
-            aria-expanded={categoryMenuOpen}
+            aria-expanded={isCategoryPanelOpen}
           >
-            {categoryMenuOpen ? (
+            {isCategoryPanelOpen ? (
               <X className="h-4 w-4" />
             ) : (
               <Menu className="h-4 w-4" />
@@ -299,26 +322,31 @@ export default function Header({
             className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none]"
             aria-label="Product categories"
           >
-            {NAV_CATEGORIES.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/category/${cat.slug}`}
-                className="group flex shrink-0 flex-col items-center gap-0.5 rounded-lg px-2 py-1 transition hover:bg-primary/5 sm:flex-row sm:gap-2 sm:px-3"
-              >
-                <div className="relative h-7 w-7 overflow-hidden rounded-md bg-slate-100 sm:h-8 sm:w-8">
-                  <Image
-                    src={cat.image}
-                    alt=""
-                    width={32}
-                    height={32}
-                    className="h-full w-full object-contain p-0.5"
-                  />
-                </div>
-                <span className="max-w-[4.5rem] truncate text-[9px] font-bold uppercase tracking-wide text-slate-700 group-hover:text-primary sm:max-w-none sm:text-[11px]">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
+            {headerCategories.map((cat) => {
+              const imageSrc = resolveCategoryImage(cat.icon);
+              return (
+                <Link
+                  key={cat.slug}
+                  href={cat.slug}
+                  className="group flex shrink-0 flex-col items-center gap-0.5 rounded-lg px-2 py-1 transition hover:bg-primary/5 sm:flex-row sm:gap-2 sm:px-3"
+                >
+                  {imageSrc ? (
+                    <div className="relative h-7 w-7 overflow-hidden rounded-md bg-slate-100 sm:h-8 sm:w-8">
+                      <Image
+                        src={imageSrc}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="h-full w-full object-contain p-0.5"
+                      />
+                    </div>
+                  ) : null}
+                  <span className="max-w-[4.5rem] truncate text-[9px] font-bold uppercase tracking-wide text-slate-700 group-hover:text-primary sm:max-w-none sm:text-[11px]">
+                    {cat.name}
+                  </span>
+                </Link>
+              );
+            })}
           </nav>
 
           <Link
@@ -331,12 +359,31 @@ export default function Header({
         </div>
       </div>
 
-      {/* Category mega menu / mobile menu */}
-      {(categoryMenuOpen || mobileMenuOpen) && (
-        <div className="absolute inset-x-0 top-full z-[60] max-h-[min(75vh,32rem)] overflow-y-auto border-t border-slate-200 bg-white shadow-xl">
-          <div className="mx-auto max-w-[95rem] px-3 py-4 sm:px-4 lg:px-6">
-            {mobileMenuOpen && !displayUser && (
-              <div className="mb-4 border-b border-slate-100 pb-4 lg:hidden">
+      {/* Category mega menu — desktop dropdown only */}
+      {categoryMenuOpen ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-[55] hidden bg-slate-900/5 lg:block"
+            aria-label="Close category menu"
+            onClick={() => setCategoryMenuOpen(false)}
+          />
+          <div className="absolute left-0 right-0 top-full z-[60] hidden px-3 sm:px-4 lg:block lg:px-6">
+            <div className="mx-auto max-w-[95rem]">
+              <div className="w-full lg:max-w-[50rem]">
+                <CategoryMegaMenu categories={categories} />
+              </div>
+            </div>
+          </div>
+        </>
+      ) : null}
+
+      {/* Mobile menu */}
+      {mobileMenuOpen ? (
+        <div className="absolute inset-x-0 top-full z-[60] px-3 sm:px-4 lg:hidden">
+          <div className="mx-auto max-w-[95rem] py-3">
+            {!displayUser ? (
+              <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-lg">
                 <LoginModal onLoginSuccess={setCurrentUser}>
                   <DialogTrigger asChild>
                     <Button className="w-full bg-primary font-semibold hover:bg-primary/90">
@@ -346,11 +393,11 @@ export default function Header({
                   </DialogTrigger>
                 </LoginModal>
               </div>
-            )}
-            <CategorySidebar isCollapsible embedded categories={categories} />
+            ) : null}
+            <CategoryMegaMenu categories={categories} />
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

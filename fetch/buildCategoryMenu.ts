@@ -1,47 +1,105 @@
 import { cache } from 'react';
-import { unstable_cache } from 'next/cache';
 import { publicFetcher } from '@/lib/fetcher';
 
-const MENU_REVALIDATE = 300;
+const REVALIDATE = 300;
 
-async function loadCategoryMenu() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const categories: any = await publicFetcher('/categories', {}, MENU_REVALIDATE);
+type ApiSubCategory = {
+  title?: string;
+  slug?: string;
+  image?: string;
+};
 
-  const rows = categories?.data ?? [];
-  const result = await Promise.all(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rows.map(async (category: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const subcategories: any = await publicFetcher(
-        `/subcategories-by-category/${category?.slug}`,
-        {},
-        MENU_REVALIDATE,
-      );
+type ApiCategory = {
+  title?: string;
+  slug?: string;
+  image?: string;
+  subcategories?: ApiSubCategory[];
+};
 
-      return {
-        name: category?.name,
-        icon: category?.image,
-        slug: `/category/${category?.slug}`,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        subcategories: subcategories?.data?.map((sub: any) => ({
-          name: sub?.name,
-          href: `/category/${category?.slug}/subcategory/${sub?.slug}`,
-        })),
-      };
-    }),
-  );
+type CategoriesResponse = {
+  success?: boolean;
+  data?: ApiCategory[];
+};
 
-  return result;
+export type CategorySubMenuItem = {
+  name: string;
+  href: string;
+  icon: string;
+};
+
+export type CategoryMenuItem = {
+  name: string;
+  icon: string;
+  slug: string;
+  subcategories: CategorySubMenuItem[];
+};
+
+export type HeaderCategoryItem = {
+  name: string;
+  icon: string;
+  slug: string;
+};
+
+async function fetchCategories(query: string): Promise<ApiCategory[]> {
+  const res = await publicFetcher<CategoriesResponse>(query, {}, REVALIDATE);
+  if (!res?.success || !Array.isArray(res.data)) return [];
+  return res.data;
 }
 
-const getCategoryMenuCached = unstable_cache(
-  loadCategoryMenu,
-  ['category-menu'],
-  { revalidate: MENU_REVALIDATE },
+function mapSubcategories(
+  categorySlug: string,
+  subs: ApiSubCategory[] = [],
+): CategorySubMenuItem[] {
+  return subs
+    .filter((sub) => sub.slug && sub.title)
+    .map((sub) => ({
+      name: sub.title!.trim(),
+      href: `/category/${categorySlug}/subcategory/${sub.slug}`,
+      icon: (sub.image || '').replace(/^\//, ''),
+    }));
+}
+
+function mapMenuItems(rows: ApiCategory[]): CategoryMenuItem[] {
+  return rows
+    .filter((cat) => cat.slug && cat.title)
+    .map((cat) => ({
+      name: cat.title!.trim(),
+      icon: (cat.image || '').replace(/^\//, ''),
+      slug: `/category/${cat.slug}`,
+      subcategories: mapSubcategories(cat.slug!, cat.subcategories ?? []),
+    }));
+}
+
+function mapHeaderItems(rows: ApiCategory[]): HeaderCategoryItem[] {
+  return rows
+    .filter((cat) => cat.slug && cat.title)
+    .map((cat) => ({
+      name: cat.title!.trim(),
+      icon: (cat.image || '').replace(/^\//, ''),
+      slug: `/category/${cat.slug}`,
+    }));
+}
+
+/** Mega menu — all categories with subcategories */
+const buildCategoryMenu = cache(async (): Promise<CategoryMenuItem[]> => {
+  const rows = await fetchCategories('/categories');
+  return mapMenuItems(rows);
+});
+
+/** Header nav — header_status=1 only */
+export const fetchHeaderCategories = cache(
+  async (): Promise<HeaderCategoryItem[]> => {
+    const rows = await fetchCategories('/categories?header_status=1');
+    return mapHeaderItems(rows);
+  },
 );
 
-/** Per-request dedupe + cross-request cache for layout + home. */
-const buildCategoryMenu = cache(getCategoryMenuCached);
+/** Home "Shop by Categories" — middle_status=1 only */
+export const fetchMiddleCategories = cache(
+  async (): Promise<HeaderCategoryItem[]> => {
+    const rows = await fetchCategories('/categories?middle_status=1');
+    return mapHeaderItems(rows);
+  },
+);
 
 export default buildCategoryMenu;

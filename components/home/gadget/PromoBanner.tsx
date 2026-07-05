@@ -3,7 +3,7 @@ import { ShieldCheck, Sparkles } from 'lucide-react';
 
 export default function PromoBanner() {
   return (
-    <section className="mt-10 sm:mt-12">
+    <section className="px-1 sm:px-4 lg:px-6">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 px-6 py-10 text-white sm:px-10 sm:py-12">
         <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
@@ -17,9 +17,9 @@ export default function PromoBanner() {
             Why shop with us?
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-300 sm:text-base">
-            Genuine products, EMI up to 36 months, 2-year replacement warranty, and
-            the best prices on mobiles, laptops, and gadgets — delivered fast
-            across Bangladesh.
+            Genuine products, EMI up to 36 months, 2-year replacement warranty,
+            and the best prices on mobiles, laptops, and gadgets — delivered
+            fast across Bangladesh.
           </p>
           <div className="mt-6">
             <Link

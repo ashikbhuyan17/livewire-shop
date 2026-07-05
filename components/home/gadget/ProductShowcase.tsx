@@ -33,11 +33,7 @@ export default function ProductShowcase({
   className,
 }: ProductShowcaseProps) {
   return (
-    <section
-      id={id}
-      className={className}
-      aria-labelledby={`${id}-heading`}
-    >
+    <section id={id} className={className} aria-labelledby={`${id}-heading`}>
       <Carousel
         opts={{
           align: 'start',
@@ -45,7 +41,7 @@ export default function ProductShowcase({
         }}
         className="w-full"
       >
-        <div className="mb-5 flex items-end justify-between gap-4">
+        <div className="mb-5 flex items-end justify-between gap-4 max-sm:px-1">
           <div className="min-w-0">
             <h2
               id={`${id}-heading`}
@@ -68,9 +64,7 @@ export default function ProductShowcase({
         </div>
 
         <div className="relative px-1 sm:px-2">
-          <CarouselPrevious
-            className={`${arrowClass} left-0 sm:left-1`}
-          />
+          <CarouselPrevious className={`${arrowClass} left-0 sm:left-1`} />
           <CarouselContent className="-ml-3 sm:-ml-4">
             {products.map((product, index) => (
               <CarouselItem
@@ -81,9 +75,7 @@ export default function ProductShowcase({
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselNext
-            className={`${arrowClass} right-0 sm:right-1`}
-          />
+          <CarouselNext className={`${arrowClass} right-0 sm:right-1`} />
         </div>
       </Carousel>
     </section>

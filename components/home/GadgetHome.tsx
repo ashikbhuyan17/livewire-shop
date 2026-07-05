@@ -8,13 +8,20 @@ import {
   BEST_DEAL_PRODUCTS,
   RECENTLY_ADDED_PRODUCTS,
 } from '@/lib/home-demo-data';
+import { fetchMiddleCategories } from '@/fetch/buildCategoryMenu';
+import { fetchHomeHeroData } from '@/lib/home-banners';
 
-export default function GadgetHome() {
+export default async function GadgetHome() {
+  const [{ sliders, adBanners }, middleCategories] = await Promise.all([
+    fetchHomeHeroData(),
+    fetchMiddleCategories(),
+  ]);
+
   return (
-    <main className="mx-auto w-full max-w-[95rem] px-3 pb-10 pt-3 sm:px-4 sm:pb-12 sm:pt-4 lg:px-6">
-      <HeroSection />
+    <main className="mx-auto w-full max-w-[95rem] space-y-4 md:space-y-10">
+      <HeroSection sliders={sliders} adBanners={adBanners} />
       <TrustBar />
-      <CategoryGrid />
+      <CategoryGrid categories={middleCategories} />
       <FlashSaleSection />
       <ProductShowcase
         id="best-deals"
@@ -22,7 +29,7 @@ export default function GadgetHome() {
         subtitle="Hand-picked offers on top brands"
         products={BEST_DEAL_PRODUCTS}
         seeAllHref="/offer/best-deals"
-        className="mt-10 sm:mt-12"
+        className="px-0 lg:px-6"
       />
       <PromoBanner />
       <ProductShowcase
@@ -31,7 +38,7 @@ export default function GadgetHome() {
         subtitle="Fresh arrivals just landed"
         products={RECENTLY_ADDED_PRODUCTS}
         seeAllHref="/search?q=new"
-        className="mt-10 sm:mt-12"
+        className="px-0 lg:px-6"
       />
     </main>
   );

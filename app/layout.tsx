@@ -5,8 +5,9 @@ import Header from '@/components/common/Header';
 import Footer from '@/components/common/Footer';
 import CartSidebar from '@/components/common/CartSidebar';
 import MobileBottomNav from '@/components/common/MobileBottomNav';
-import buildCategoryMenu from '@/fetch/buildCategoryMenu';
-import { publicFetcher } from '@/lib/fetcher';
+import buildCategoryMenu, {
+  fetchHeaderCategories,
+} from '@/fetch/buildCategoryMenu';
 import { Toaster } from '@/components/ui/sonner';
 import { getCart } from '@/lib/cart';
 import { getWishlistSummary } from '@/lib/wishlist';
@@ -36,21 +37,20 @@ const geistMono = localFont({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const res = await getSiteSettingsPublic();
-  const data = res?.data;
+  const data = await getSiteSettingsPublic();
   const defaultTitle =
-    data?.meta_title?.trim() ||
+    data.meta_title?.trim() ||
     `${SITE_BRAND_SHORT} — Premium Smartphone and Gadget Chain`;
   const description =
-    data?.meta_description?.trim() ||
+    data.meta_description?.trim() ||
     `Shop genuine mobiles, laptops, tablets, and gadgets at ${SITE_BRAND_SHORT}. Fast delivery, EMI, and warranty across Bangladesh.`;
   const keywords =
-    data?.meta_keywords
+    data.meta_keywords
       ?.split(',')
       .map((k: string) => k.trim())
       .filter(Boolean) ?? [];
-  const fav = getAbsoluteImageFilename(data?.fav_icon);
-  const og = getAbsoluteImageFilename(data?.light_logo);
+  const fav = getAbsoluteImageFilename(data.fav_icon);
+  const og = getAbsoluteImageFilename(data.light_logo);
 
   return {
     metadataBase: resolveMetadataBase(),
@@ -99,8 +99,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [categories, initialCart, user] = await Promise.all([
+  const [categories, headerCategories, initialCart, user] = await Promise.all([
     buildCategoryMenu(),
+    fetchHeaderCategories(),
     getCart(),
     getLayoutSessionUser(),
   ]);
@@ -126,8 +127,12 @@ export default async function RootLayout({
         <>
           <WishlistStoreInit productIds={wishlistSummary.productIds} />
           <CompareStoreInit productIds={compareSummary.productIds} />
-          <Header categories={categories} user={user} />
-          <div className="mt-[6.75rem] pb-24 sm:mt-[7.5rem] lg:mt-[9.75rem] lg:pb-0">
+          <Header
+            categories={categories}
+            headerCategories={headerCategories}
+            user={user}
+          />
+          <div className="pb-20 mt-[3.50rem] lg:mt-[9.75rem] lg:pb-0">
             <CartSidebar initialCart={initialCart} />
             {children}
             <Toaster position="top-center" richColors />

@@ -26,8 +26,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import CategorySidebar from '@/components/common/CategorySidebar';
+import { useCategoryDrawerStore } from '@/stores/category-drawer-store';
 import LoginModal from '@/components/common/LoginModal';
+import MobileCategoryMenu from '@/components/common/MobileCategoryMenu';
+import type { CategoryMenuItem } from '@/fetch/buildCategoryMenu';
 import { useCartStore } from '@/stores/cart-store';
 import { clearAuth } from '@/action/token';
 import type { UserCookie } from '@/action/token';
@@ -44,8 +46,7 @@ const labelClass =
   'max-w-full truncate text-[10px] font-medium leading-tight sm:text-[11px]';
 
 type Props = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  categories: any[];
+  categories: CategoryMenuItem[];
   user: UserCookie | null;
 };
 
@@ -57,7 +58,8 @@ export default function MobileBottomNav({
   const router = useRouter();
   const cart = useCartStore((s) => s.cart);
   const setCartSheetOpen = useCartStore((s) => s.setCartSheetOpen);
-  const [categoryOpen, setCategoryOpen] = useState(false);
+  const categoryOpen = useCategoryDrawerStore((s) => s.open);
+  const setCategoryOpen = useCategoryDrawerStore((s) => s.setOpen);
   const [moreOpen, setMoreOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserCookie | null>(
     initialUser,
@@ -91,10 +93,11 @@ export default function MobileBottomNav({
   ] as const;
 
   return (
-    <nav
-      className="fixed inset-x-0 bottom-0 z-40 lg:hidden pointer-events-none"
-      aria-label="Mobile primary navigation"
-    >
+    <>
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 lg:hidden pointer-events-none"
+        aria-label="Mobile primary navigation"
+      >
       <div
         className="pointer-events-auto  rounded-2xl border border-gray-200/90 bg-white/95 px-1 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)] backdrop-blur-md"
         style={{
@@ -124,43 +127,26 @@ export default function MobileBottomNav({
             </span>
           </Link>
 
-          <Sheet open={categoryOpen} onOpenChange={setCategoryOpen}>
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  navItemClass,
-                  categoryOpen
-                    ? 'text-headerBg'
-                    : 'text-gray-500 hover:text-gray-800',
-                )}
-              >
-                <Menu className="h-6 w-6 shrink-0" strokeWidth={1.75} />
-                <span
-                  className={cn(
-                    labelClass,
-                    categoryOpen && 'font-semibold text-headerBg',
-                  )}
-                >
-                  Category
-                </span>
-              </button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-0">
-              <SheetHeader className="border-b border-gray-100 px-4 py-3 text-left">
-                <SheetTitle className="text-lg font-semibold">
-                  Shop by category
-                </SheetTitle>
-              </SheetHeader>
-              <div className="max-h-[calc(85vh-4rem)] w-full overflow-y-auto px-3 py-2">
-                <CategorySidebar
-                  isCollapsible
-                  embedded
-                  categories={categories}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
+          <button
+            type="button"
+            onClick={() => setCategoryOpen(true)}
+            className={cn(
+              navItemClass,
+              categoryOpen
+                ? 'text-headerBg'
+                : 'text-gray-500 hover:text-gray-800',
+            )}
+          >
+            <Menu className="h-6 w-6 shrink-0" strokeWidth={1.75} />
+            <span
+              className={cn(
+                labelClass,
+                categoryOpen && 'font-semibold text-headerBg',
+              )}
+            >
+              Category
+            </span>
+          </button>
 
           <button
             type="button"
@@ -347,5 +333,22 @@ export default function MobileBottomNav({
         </div>
       </div>
     </nav>
+
+      <Sheet open={categoryOpen} onOpenChange={setCategoryOpen}>
+        <SheetContent
+          side="bottom"
+          className="h-[85vh] rounded-t-2xl p-0 lg:hidden"
+        >
+          <SheetHeader className="border-b border-gray-100 px-4 py-3 text-left">
+            <SheetTitle className="text-lg font-semibold">
+              Shop by category
+            </SheetTitle>
+          </SheetHeader>
+          <div className="max-h-[calc(85vh-4rem)] w-full overflow-y-auto px-3 py-2">
+            <MobileCategoryMenu categories={categories} />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

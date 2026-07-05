@@ -72,14 +72,14 @@ export function formatBlogDate(dateString: string | null | undefined): string {
   }
 }
 
-export async function fetchBlogs(page = 1): Promise<BlogsApiResponse> {
+export async function fetchBlogs(page = 1): Promise<BlogsApiResponse | null> {
   const query = page > 1 ? `?page=${page}` : '';
   return publicFetcher<BlogsApiResponse>(`/blogs${query}`, {}, BLOG_REVALIDATE);
 }
 
 export async function fetchBlogBySlug(
   slug: string,
-): Promise<BlogDetailApiResponse> {
+): Promise<BlogDetailApiResponse | null> {
   return publicFetcher<BlogDetailApiResponse>(
     `/blog-details/${encodeURIComponent(slug)}`,
     {},

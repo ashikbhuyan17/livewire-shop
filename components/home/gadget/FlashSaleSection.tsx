@@ -45,56 +45,67 @@ export default function FlashSaleSection() {
   }, [endDate]);
 
   return (
-    <section
-      className="mt-10 overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-500 to-sky-500 p-4 shadow-lg sm:mt-12 sm:p-6"
-      aria-labelledby="flash-sale-heading"
-    >
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="text-white">
-          <div className="flex items-center gap-2">
-            <Flame className="h-5 w-5 text-amber-300" />
-            <h2 id="flash-sale-heading" className="text-xl font-bold sm:text-2xl">
-              Flash Sale
-            </h2>
-          </div>
-          <p className="mt-1 text-sm text-blue-100">
-            Guaranteed lowest price · Replacement guarantee · Free delivery
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-blue-100">
-            Offer ending in
-          </span>
-          <div className="flex gap-2 rounded-2xl bg-white/95 px-3 py-2.5 shadow-sm sm:gap-3 sm:px-4">
-            <TimeBlock value={timeLeft.days} label="Days" />
-            <span className="self-center text-lg font-bold text-slate-300">:</span>
-            <TimeBlock value={timeLeft.hours} label="Hour" />
-            <span className="self-center text-lg font-bold text-slate-300">:</span>
-            <TimeBlock value={timeLeft.minutes} label="Min" />
-            <span className="self-center text-lg font-bold text-slate-300">:</span>
-            <TimeBlock value={timeLeft.seconds} label="Sec" />
-          </div>
-          <Link
-            href="/offer/flash-sale"
-            className="inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm transition hover:bg-blue-50"
-          >
-            See all
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-
-      <div className="mt-5 -mx-1 overflow-x-auto pb-2 scrollbar-hide sm:mt-6">
-        <div className="flex gap-3 px-1 sm:grid sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {FLASH_SALE_PRODUCTS.map((product) => (
-            <div
-              key={`flash-${product.id}`}
-              className="w-[72%] shrink-0 sm:w-auto sm:shrink"
-            >
-              <DemoProductCard product={product} variant="compact" />
+    <section className="px-1 sm:px-4 lg:px-6">
+      <div
+        className="overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-500 to-sky-500 p-4 shadow-lg sm:mt-12 sm:p-6"
+        aria-labelledby="flash-sale-heading"
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="text-white">
+            <div className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-amber-300" />
+              <h2
+                id="flash-sale-heading"
+                className="text-xl font-bold sm:text-2xl"
+              >
+                Flash Sale
+              </h2>
             </div>
-          ))}
+            <p className="mt-1 text-sm text-blue-100">
+              Guaranteed lowest price · Replacement guarantee · Free delivery
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <span className="text-xs font-semibold uppercase tracking-wider text-blue-100">
+              Offer ending in
+            </span>
+            <div className="flex gap-2 rounded-2xl bg-white/95 px-3 py-2.5 shadow-sm sm:gap-3 sm:px-4">
+              <TimeBlock value={timeLeft.days} label="Days" />
+              <span className="self-center text-lg font-bold text-slate-300">
+                :
+              </span>
+              <TimeBlock value={timeLeft.hours} label="Hour" />
+              <span className="self-center text-lg font-bold text-slate-300">
+                :
+              </span>
+              <TimeBlock value={timeLeft.minutes} label="Min" />
+              <span className="self-center text-lg font-bold text-slate-300">
+                :
+              </span>
+              <TimeBlock value={timeLeft.seconds} label="Sec" />
+            </div>
+            <Link
+              href="/offer/flash-sale"
+              className="inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm transition hover:bg-blue-50"
+            >
+              See all
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-5 -mx-1 overflow-x-auto pb-2 scrollbar-hide sm:mt-6">
+          <div className="flex gap-3 px-1 sm:grid sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {FLASH_SALE_PRODUCTS.map((product) => (
+              <div
+                key={`flash-${product.id}`}
+                className="w-[72%] shrink-0 sm:w-auto sm:shrink"
+              >
+                <DemoProductCard product={product} variant="compact" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

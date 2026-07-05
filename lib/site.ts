@@ -1,30 +1,32 @@
 import { cache } from 'react';
 import type { Metadata } from 'next';
 import { publicFetcher } from '@/lib/fetcher';
+import { DEMO_SITE_SETTINGS, type DemoSiteSettings } from '@/lib/demo-site-data';
 
 export const SITE_BRAND_SHORT = 'Livewire';
 
-export type SiteSettingsData = {
-  meta_title?: string;
-  meta_description?: string;
-  meta_keywords?: string;
-  fav_icon?: string;
-  light_logo?: string;
-};
+export type SiteSettingsData = DemoSiteSettings;
 
 const SETTINGS_REVALIDATE = 3600;
 
-/** Single cached settings fetch shared by layout + metadata. */
-export const getSiteSettingsPublic = cache(async () => {
-  try {
-    return await publicFetcher<{ data?: SiteSettingsData }>(
-      '/settings',
-      {},
-      SETTINGS_REVALIDATE,
-    );
-  } catch {
-    return null;
-  }
+type SettingsResponse = {
+  success?: boolean;
+  status?: boolean;
+  data?: SiteSettingsData;
+};
+
+/** Single cached settings fetch shared by layout + metadata. Falls back to demo data. */
+export const getSiteSettingsPublic = cache(async (): Promise<SiteSettingsData> => {
+  const res = await publicFetcher<SettingsResponse>(
+    '/settings',
+    {},
+    SETTINGS_REVALIDATE,
+  );
+
+  const apiData = res?.data;
+  if (!apiData) return DEMO_SITE_SETTINGS;
+
+  return { ...DEMO_SITE_SETTINGS, ...apiData };
 });
 
 export function resolveMetadataBase(): URL {

@@ -33,37 +33,6 @@ export const TRUST_ITEMS = [
   { icon: 'tag', label: 'Best Price in BD' },
 ] as const;
 
-export const HERO_BANNERS: HeroBanner[] = [
-  {
-    id: 'hero-main',
-    image:
-      'https://dazzle.sgp1.cdn.digitaloceanspaces.com/110996/xiaomi-17t-(1).jpg',
-    alt: 'Xiaomi 17T — flagship smartphone',
-    href: '#',
-  },
-  {
-    id: 'hero-iphone',
-    image:
-      'https://dazzle.sgp1.cdn.digitaloceanspaces.com/94866/IPHONE-17-seriesv5.jpg.jpeg',
-    alt: 'iPhone 17 Series',
-    href: '#',
-  },
-  {
-    id: 'hero-xiaomi',
-    image:
-      'https://dazzle.sgp1.cdn.digitaloceanspaces.com/110995/xiaomi-17t.jpg',
-    alt: 'Xiaomi 17T',
-    href: '#',
-  },
-  {
-    id: 'hero-mart',
-    image:
-      'https://dazzle.sgp1.cdn.digitaloceanspaces.com/110994/dazzle-mart.jpg',
-    alt: 'Dazzle Mart offers',
-    href: '#',
-  },
-];
-
 export const CATEGORIES: CategoryItem[] = [
   { name: 'Phones', slug: 'phones', image: '/categories/phones.jpeg' },
   { name: 'Tablet', slug: 'tablet', image: '/categories/tablet.jpeg' },

@@ -6,142 +6,285 @@ import { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { HERO_BANNERS } from '@/lib/home-demo-data';
+import type { HeroBanner } from '@/lib/home-demo-data';
 import { cn } from '@/lib/utils';
 
 const DESKTOP_HERO_MIN_H =
   'min-h-[20rem] sm:min-h-[22rem] md:min-h-[26rem] lg:min-h-[30rem] xl:min-h-[36rem]';
 
-export default function HeroSection() {
-  const [mainRef, mainApi] = useEmblaCarousel({ loop: true }, [
+const MOBILE_HERO_SLIDE =
+  'relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-slate-100 shadow-sm ring-1 ring-slate-200/80 sm:aspect-[5/2]';
+
+const MOBILE_AD_BANNER =
+  'relative aspect-[4/3] min-w-0 flex-1 overflow-hidden rounded-xl bg-slate-100 shadow-sm ring-1 ring-slate-200/80';
+
+function MobileAdBanner({ banner }: { banner: HeroBanner }) {
+  const content = (
+    <Image
+      src={banner.image}
+      alt={banner.alt}
+      fill
+      sizes="(max-width: 768px) 50vw, 33vw"
+      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+    />
+  );
+
+  if (banner.href) {
+    return (
+      <Link href={banner.href} className={cn('group block', MOBILE_AD_BANNER)}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={cn('group', MOBILE_AD_BANNER)}>{content}</div>;
+}
+
+type Props = {
+  sliders?: HeroBanner[];
+  adBanners?: HeroBanner[];
+};
+
+function BannerSlide({
+  banner,
+  priority = false,
+  sizes,
+  className,
+}: {
+  banner: HeroBanner;
+  priority?: boolean;
+  sizes: string;
+  className?: string;
+}) {
+  const content = (
+    <Image
+      src={banner.image}
+      alt={banner.alt}
+      fill
+      priority={priority}
+      sizes={sizes}
+      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+    />
+  );
+
+  if (banner.href) {
+    return (
+      <Link
+        href={banner.href}
+        className={cn('group relative block h-full w-full', className)}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={cn('group relative h-full w-full', className)}>
+      {content}
+    </div>
+  );
+}
+
+function SliderCarousel({
+  banners,
+  className,
+  slideClassName,
+  sizes,
+  showArrows = true,
+  showDots = true,
+}: {
+  banners: HeroBanner[];
+  className?: string;
+  slideClassName?: string;
+  sizes: string;
+  showArrows?: boolean;
+  showDots?: boolean;
+}) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: banners.length > 1 }, [
     Autoplay({ delay: 5000, stopOnInteraction: false }),
   ]);
   const [selected, setSelected] = useState(0);
 
   const onSelect = useCallback(() => {
-    if (!mainApi) return;
-    setSelected(mainApi.selectedScrollSnap());
-  }, [mainApi]);
+    if (!emblaApi) return;
+    setSelected(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
 
   useEffect(() => {
-    if (!mainApi) return;
+    if (!emblaApi) return;
     onSelect();
-    mainApi.on('select', onSelect);
+    emblaApi.on('select', onSelect);
     return () => {
-      mainApi.off('select', onSelect);
+      emblaApi.off('select', onSelect);
     };
-  }, [mainApi, onSelect]);
+  }, [emblaApi, onSelect]);
 
-  const scrollPrev = () => mainApi?.scrollPrev();
-  const scrollNext = () => mainApi?.scrollNext();
+  if (banners.length === 0) return null;
 
-  const [mainBanner, ...sideBanners] = HERO_BANNERS;
+  if (banners.length === 1) {
+    return (
+      <div className={cn('relative', className, slideClassName)}>
+        <BannerSlide banner={banners[0]} priority sizes={sizes} />
+      </div>
+    );
+  }
 
   return (
-    <section className="w-full" aria-label="Featured promotions">
-      {/* Desktop: asymmetric grid */}
-      <div
-        className={cn(
-          'hidden gap-3 md:grid md:grid-cols-12 md:gap-4 md:items-stretch',
-          DESKTOP_HERO_MIN_H,
-        )}
-      >
-        <Link
-          href={mainBanner.href ?? '#'}
-          className={cn(
-            'group relative col-span-8 overflow-hidden rounded-2xl bg-slate-100 shadow-sm ring-1 ring-slate-200/80',
-            DESKTOP_HERO_MIN_H,
-          )}
-        >
-          <Image
-            src={mainBanner.image}
-            alt={mainBanner.alt}
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, 66vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-          />
-        </Link>
-
-        <div
-          className={cn(
-            'col-span-4 flex flex-col gap-3 md:gap-4',
-            DESKTOP_HERO_MIN_H,
-          )}
-        >
-          {sideBanners.slice(0, 2).map((banner) => (
-            <Link
+    <div className={cn('relative', className)}>
+      <div ref={emblaRef} className={cn('relative', slideClassName)}>
+        <div className="flex h-full">
+          {banners.map((banner, i) => (
+            <div
               key={banner.id}
-              href={banner.href ?? '#'}
-              className="group relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-slate-100 shadow-sm ring-1 ring-slate-200/80"
+              className="relative h-full min-w-0 shrink-0 grow-0 basis-full"
             >
-              <Image
-                src={banner.image}
-                alt={banner.alt}
-                fill
-                sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+              <BannerSlide
+                banner={banner}
+                priority={i === 0}
+                sizes={sizes}
+                className="h-full w-full"
               />
-            </Link>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Mobile: carousel */}
-      <div className="relative md:hidden">
-        <div ref={mainRef} className="overflow-hidden rounded-xl">
-          <div className="flex">
-            {HERO_BANNERS.map((banner, i) => (
-              <div key={banner.id} className="min-w-0 shrink-0 grow-0 basis-full">
-                <Link
-                  href={banner.href ?? '#'}
-                  className="relative block min-h-[15rem] overflow-hidden rounded-xl bg-slate-100 sm:min-h-[18rem]"
-                >
-                  <Image
-                    src={banner.image}
-                    alt={banner.alt}
-                    fill
-                    priority={i === 0}
-                    sizes="100vw"
-                    className="object-cover"
-                  />
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
+      {showArrows ? (
+        <>
+          <button
+            type="button"
+            onClick={() => emblaApi?.scrollPrev()}
+            className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md backdrop-blur-sm transition hover:bg-white"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => emblaApi?.scrollNext()}
+            className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md backdrop-blur-sm transition hover:bg-white"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </>
+      ) : null}
 
-        <button
-          type="button"
-          onClick={scrollPrev}
-          className="absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md backdrop-blur-sm"
-          aria-label="Previous slide"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={scrollNext}
-          className="absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md backdrop-blur-sm"
-          aria-label="Next slide"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-
-        <div className="mt-3 flex justify-center gap-1.5">
-          {HERO_BANNERS.map((banner, i) => (
+      {showDots ? (
+        <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 md:bottom-4">
+          {banners.map((banner, i) => (
             <button
               key={banner.id}
               type="button"
-              onClick={() => mainApi?.scrollTo(i)}
+              onClick={() => emblaApi?.scrollTo(i)}
               className={cn(
                 'h-1.5 rounded-full transition-all',
-                i === selected ? 'w-6 bg-primary' : 'w-1.5 bg-slate-300',
+                i === selected ? 'w-6 bg-primary' : 'w-1.5 bg-white/80',
               )}
               aria-label={`Go to slide ${i + 1}`}
             />
           ))}
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+export default function HeroSection({ sliders = [], adBanners = [] }: Props) {
+  const hasSliders = sliders.length > 0;
+  const hasAds = adBanners.length > 0;
+
+  if (!hasSliders && !hasAds) return null;
+
+  return (
+    <section
+      className="w-full px-1 sm:px-4  lg:px-6"
+      aria-label="Featured promotions"
+    >
+      {/* Desktop: sliders carousel (left) + ad banners (right) */}
+      <div
+        className={cn(
+          'hidden gap-3 md:grid md:gap-4 md:items-stretch',
+          hasSliders && hasAds && 'md:grid-cols-12',
+          hasSliders && !hasAds && 'md:grid-cols-1',
+          !hasSliders && hasAds && 'md:grid-cols-2',
+          (hasSliders || hasAds) && DESKTOP_HERO_MIN_H,
+        )}
+      >
+        {hasSliders ? (
+          <SliderCarousel
+            banners={sliders}
+            className={cn(
+              'overflow-hidden rounded-2xl bg-slate-100 shadow-sm ring-1 ring-slate-200/80',
+              hasAds ? 'col-span-8' : 'col-span-full',
+              DESKTOP_HERO_MIN_H,
+            )}
+            slideClassName={DESKTOP_HERO_MIN_H}
+            sizes="(max-width: 768px) 100vw, 66vw"
+          />
+        ) : null}
+
+        {hasAds ? (
+          <div
+            className={cn(
+              'flex flex-col gap-3 md:gap-4',
+              hasSliders
+                ? 'col-span-4'
+                : 'col-span-full md:grid md:grid-cols-2 md:gap-4',
+              hasSliders && DESKTOP_HERO_MIN_H,
+            )}
+          >
+            {adBanners.slice(0, 2).map((banner) =>
+              banner.href ? (
+                <Link
+                  key={banner.id}
+                  href={banner.href}
+                  className="group relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-slate-100 shadow-sm ring-1 ring-slate-200/80"
+                >
+                  <Image
+                    src={banner.image}
+                    alt={banner.alt}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  />
+                </Link>
+              ) : (
+                <div
+                  key={banner.id}
+                  className="group relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-slate-100 shadow-sm ring-1 ring-slate-200/80"
+                >
+                  <Image
+                    src={banner.image}
+                    alt={banner.alt}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  />
+                </div>
+              ),
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      {/* Mobile: slider + ad banners side by side */}
+      <div className="mt-1 flex flex-col gap-2 md:hidden">
+        {hasSliders ? (
+          <SliderCarousel
+            banners={sliders}
+            slideClassName={MOBILE_HERO_SLIDE}
+            sizes="100vw"
+          />
+        ) : null}
+
+        {hasAds ? (
+          <div className="flex gap-2">
+            {adBanners.slice(0, 2).map((banner) => (
+              <MobileAdBanner key={banner.id} banner={banner} />
+            ))}
+          </div>
+        ) : null}
       </div>
     </section>
   );

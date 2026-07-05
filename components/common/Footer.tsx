@@ -13,10 +13,10 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { publicFetcher } from '@/lib/fetcher';
+import buildCategoryMenu from '@/fetch/buildCategoryMenu';
+import FooterCategories from '@/components/common/FooterCategories';
 import { getLegalPages, legalPageHref } from '@/lib/legal-pages';
-import { CATEGORIES } from '@/lib/home-demo-data';
-import { SITE_BRAND_SHORT } from '@/lib/site';
+import { getSiteSettingsPublic, SITE_BRAND_SHORT } from '@/lib/site';
 
 const COMPANY_LINKS = [
   { label: 'About Us', href: '/about' },
@@ -25,9 +25,6 @@ const COMPANY_LINKS = [
   { label: 'Brands', href: '/brands' },
   { label: 'Contact', href: '/contact' },
 ] as const;
-
-const DEFAULT_ABOUT =
-  'Livewire is Bangladesh\'s premium smartphone and gadget chain — genuine products, best prices, EMI up to 36 months, and fast nationwide delivery.';
 
 function SocialLink({
   href,
@@ -52,33 +49,22 @@ function SocialLink({
 }
 
 export default async function Footer() {
-  const [siteSettings, categories, legalPages] = await Promise.all([
-    publicFetcher('/settings', {}, 3600),
-    publicFetcher('/categories', {}, 3600),
+  const [settings, categoryMenu, legalPages] = await Promise.all([
+    getSiteSettingsPublic(),
+    buildCategoryMenu(),
     getLegalPages(),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const settings = siteSettings as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const apiCategories = ((categories as any)?.data ?? []).slice(0, 8);
   const footerCategories =
-    apiCategories.length > 0
-      ? apiCategories.map((c: { name: string; slug: string }) => ({
-          name: c.name,
-          slug: c.slug,
-        }))
-      : CATEGORIES.slice(0, 8);
+    categoryMenu.length > 0 ? categoryMenu.slice(0, 8) : [];
 
-  const aboutText = settings?.data?.about_text?.trim() || DEFAULT_ABOUT;
-  const phone = settings?.data?.phone_1 || '09638001122';
-  const email = settings?.data?.mail || 'info@livewire.com.bd';
+  const aboutText = settings.about_text?.trim() || '';
+  const phone = settings.phone_1 || '09638001122';
+  const email = settings.mail || 'info@livewire.com.bd';
   const address =
-    settings?.data?.address ||
+    settings.address ||
     'Jamuna Future Park, Bashundhara City & outlets across Bangladesh';
-  const copyright =
-    settings?.data?.copyright_text ||
-    `© ${new Date().getFullYear()} ${SITE_BRAND_SHORT}. All rights reserved.`;
+  const copyright = settings.copyright_text || '';
 
   return (
     <footer className="mt-14 border-t border-primary/20">
@@ -157,25 +143,16 @@ export default async function Footer() {
             </ul>
 
             <div className="mt-6 flex flex-wrap gap-2.5">
-              <SocialLink href={settings?.data?.fb_link || '#'} label="Facebook">
+              <SocialLink href={settings.fb_link || '#'} label="Facebook">
                 <Facebook className="h-4 w-4" />
               </SocialLink>
-              <SocialLink
-                href={settings?.data?.insta_link || '#'}
-                label="Instagram"
-              >
+              <SocialLink href={settings.insta_link || '#'} label="Instagram">
                 <Instagram className="h-4 w-4" />
               </SocialLink>
-              <SocialLink
-                href={settings?.data?.twitter_link || '#'}
-                label="Twitter"
-              >
+              <SocialLink href={settings.twitter_link || '#'} label="Twitter">
                 <Twitter className="h-4 w-4" />
               </SocialLink>
-              <SocialLink
-                href={settings?.data?.youtube_link || '#'}
-                label="YouTube"
-              >
+              <SocialLink href={settings.youtube_link || '#'} label="YouTube">
                 <Youtube className="h-4 w-4" />
               </SocialLink>
             </div>
@@ -205,28 +182,15 @@ export default async function Footer() {
             <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-secondary">
               Categories
             </h3>
-            <ul className="space-y-2.5 text-sm">
-              {footerCategories.map(
-                (category: { name: string; slug: string }) => (
-                  <li key={category.slug}>
-                    <Link
-                      href={`/category/${category.slug}`}
-                      className="text-blue-50/85 transition hover:translate-x-0.5 hover:text-white"
-                    >
-                      {category.name}
-                    </Link>
-                  </li>
-                ),
-              )}
-            </ul>
+            <FooterCategories categories={footerCategories} />
           </div>
 
           {/* Legal */}
-          <div className="lg:col-span-2">
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-secondary">
-              Legal
-            </h3>
-            {legalPages.length > 0 ? (
+          {legalPages.length > 0 ? (
+            <div className="lg:col-span-2">
+              <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-secondary">
+                Legal
+              </h3>
               <ul className="space-y-2.5 text-sm">
                 {legalPages.map((page) => (
                   <li key={page.id ?? page.slug}>
@@ -239,26 +203,8 @@ export default async function Footer() {
                   </li>
                 ))}
               </ul>
-            ) : (
-              <ul className="space-y-2.5 text-sm text-blue-50/85">
-                <li>
-                  <Link href="/pages/terms" className="hover:text-white">
-                    Terms &amp; Conditions
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pages/privacy" className="hover:text-white">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pages/warranty" className="hover:text-white">
-                    Warranty Policy
-                  </Link>
-                </li>
-              </ul>
-            )}
-          </div>
+            </div>
+          ) : null}
 
           {/* Payment */}
           <div className="lg:col-span-2">

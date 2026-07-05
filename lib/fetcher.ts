@@ -9,12 +9,12 @@ import {
 } from '@/lib/affiliate-cookies';
 import { ORDERS_PER_PAGE } from '@/lib/order-utils';
 
-/** Public API – no cookies. Uses Next.js fetch cache (next.revalidate). */
+/** Public API – no cookies. Uses Next.js fetch cache (next.revalidate). Returns null when endpoint is missing or non-JSON. */
 export async function publicFetcher<T>(
   slug: string,
   options: RequestInit = {},
   revalidate: number = 3600,
-): Promise<T> {
+): Promise<T | null> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${slug}`, {
       ...options,
@@ -24,10 +24,15 @@ export async function publicFetcher<T>(
         ...(options.headers as Record<string, string>),
       },
     });
-    return res.json() as Promise<T>;
-  } catch (error) {
-    console.log('PublicFetcher Error:', error);
-    throw error;
+
+    const contentType = res.headers.get('content-type') ?? '';
+    if (!res.ok || !contentType.includes('application/json')) {
+      return null;
+    }
+
+    return (await res.json()) as T;
+  } catch {
+    return null;
   }
 }
 

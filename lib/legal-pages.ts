@@ -19,7 +19,8 @@ export type LegalPage = {
   status?: string | null;
 };
 
-export type LegalPagesResponse = {
+type LegalPagesResponse = {
+  success?: boolean;
   status?: boolean;
   message?: string;
   data?: LegalPage[];
@@ -35,19 +36,18 @@ export function isLegalPageActive(page: LegalPage): boolean {
 }
 
 export const getLegalPages = cache(async (): Promise<LegalPage[]> => {
-  try {
-    const res = await publicFetcher<LegalPagesResponse>(
-      '/legal-pages',
-      {},
-      REVALIDATE,
-    );
-    if (!res?.status || !Array.isArray(res.data)) return [];
-    return res.data.filter(
-      (p) => p.slug?.trim() && p.title?.trim() && isLegalPageActive(p),
-    );
-  } catch {
-    return [];
-  }
+  const res = await publicFetcher<LegalPagesResponse>(
+    '/legal-pages',
+    {},
+    REVALIDATE,
+  );
+
+  if (!res?.success && !res?.status) return [];
+  if (!Array.isArray(res.data)) return [];
+
+  return res.data.filter(
+    (p) => p.slug?.trim() && p.title?.trim() && isLegalPageActive(p),
+  );
 });
 
 export async function getLegalPageBySlug(

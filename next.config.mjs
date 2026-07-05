@@ -58,6 +58,18 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'pub-8b3adcede6394a9fb244e806bff419ee.r2.dev',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'livewire.zariyafashionbd.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
