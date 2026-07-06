@@ -32,7 +32,7 @@ export async function generateMetadata({
     title: page.meta_title?.trim() || page.title || 'Page',
     description:
       page.meta_description?.trim() ||
-      `Read ${page.title ?? 'this page'} on BestFood City.`,
+      `Read ${page.title ?? 'this page'} on Livewire.`,
     pathname: contentPageHref(slug),
     keywords: page.meta_keywords
       ?.split(',')

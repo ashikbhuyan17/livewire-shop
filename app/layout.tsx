@@ -135,7 +135,7 @@ export default async function RootLayout({
           <div className="pb-20 mt-[3.50rem] lg:mt-[9.75rem] lg:pb-0">
             <CartSidebar initialCart={initialCart} />
             {children}
-            <Toaster position="top-center" richColors />
+            <Toaster position="top-right" richColors />
             <Footer />
           </div>
           <MobileBottomNav categories={categories} user={user} />

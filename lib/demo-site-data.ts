@@ -1,5 +1,11 @@
 const BRAND = 'Livewire';
 
+export type WeAcceptItem = {
+  id?: number;
+  title?: string;
+  image?: string;
+};
+
 export type DemoSiteSettings = {
   meta_title?: string;
   meta_description?: string;
@@ -15,6 +21,11 @@ export type DemoSiteSettings = {
   insta_link?: string;
   twitter_link?: string;
   youtube_link?: string;
+  linkedin_link?: string;
+  whatsapp?: string;
+  tiktok_link?: string;
+  pinterest_link?: string;
+  weaccept?: WeAcceptItem[];
 };
 
 export const DEMO_SITE_SETTINGS: DemoSiteSettings = {

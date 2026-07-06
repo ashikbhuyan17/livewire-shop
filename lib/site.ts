@@ -15,8 +15,82 @@ type SettingsResponse = {
   data?: SiteSettingsData;
 };
 
+type BusinessSettingsData = {
+  business_name?: string;
+  business_email?: string;
+  business_phone?: string;
+  business_address?: string;
+  about_text?: string;
+  about?: string;
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
+  title?: string;
+  logo?: string;
+  fav_icon?: string;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  linkedin?: string;
+  youtube?: string;
+  whatsapp?: string;
+  tiktok?: string;
+  pinterest?: string;
+  weaccept?: SiteSettingsData['weaccept'];
+};
+
+type BusinessSettingsResponse = {
+  success?: boolean;
+  message?: string;
+  data?: BusinessSettingsData;
+};
+
+function buildCopyrightText(businessName?: string): string {
+  const name = businessName?.trim() || SITE_BRAND_SHORT;
+  return `© ${new Date().getFullYear()} ${name}. All rights reserved.`;
+}
+
+function mapBusinessSettings(data: BusinessSettingsData): SiteSettingsData {
+  return {
+    ...DEMO_SITE_SETTINGS,
+    meta_title: data.meta_title || data.title || DEMO_SITE_SETTINGS.meta_title,
+    meta_description:
+      data.meta_description || DEMO_SITE_SETTINGS.meta_description,
+    meta_keywords: data.meta_keywords || DEMO_SITE_SETTINGS.meta_keywords,
+    about_text:
+      data.about_text?.trim() ||
+      data.about?.trim() ||
+      DEMO_SITE_SETTINGS.about_text,
+    phone_1: data.business_phone || DEMO_SITE_SETTINGS.phone_1,
+    mail: data.business_email || DEMO_SITE_SETTINGS.mail,
+    address: data.business_address || DEMO_SITE_SETTINGS.address,
+    copyright_text: buildCopyrightText(data.business_name || data.title),
+    light_logo: data.logo || DEMO_SITE_SETTINGS.light_logo,
+    fav_icon: data.fav_icon || DEMO_SITE_SETTINGS.fav_icon,
+    fb_link: data.facebook || DEMO_SITE_SETTINGS.fb_link,
+    insta_link: data.instagram || DEMO_SITE_SETTINGS.insta_link,
+    twitter_link: data.twitter || DEMO_SITE_SETTINGS.twitter_link,
+    youtube_link: data.youtube || DEMO_SITE_SETTINGS.youtube_link,
+    linkedin_link: data.linkedin || DEMO_SITE_SETTINGS.linkedin_link,
+    whatsapp: data.whatsapp || DEMO_SITE_SETTINGS.whatsapp,
+    tiktok_link: data.tiktok || DEMO_SITE_SETTINGS.tiktok_link,
+    pinterest_link: data.pinterest || DEMO_SITE_SETTINGS.pinterest_link,
+    weaccept: Array.isArray(data.weaccept) ? data.weaccept : [],
+  };
+}
+
 /** Single cached settings fetch shared by layout + metadata. Falls back to demo data. */
 export const getSiteSettingsPublic = cache(async (): Promise<SiteSettingsData> => {
+  const businessRes = await publicFetcher<BusinessSettingsResponse>(
+    '/business-settings',
+    {},
+    SETTINGS_REVALIDATE,
+  );
+
+  if (businessRes?.success && businessRes.data) {
+    return mapBusinessSettings(businessRes.data);
+  }
+
   const res = await publicFetcher<SettingsResponse>(
     '/settings',
     {},
