@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    staleTimes: {
+      // Keep visited pages in the client router cache (Next.js 15 default dynamic: 0).
+      dynamic: 300,
+      static: 300,
+    },
+  },
+  
   async rewrites() {
     return [
       { source: '/login', destination: '/signin' },

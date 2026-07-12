@@ -20,7 +20,7 @@ export type BlogDetailPost = BlogPost & {
 };
 
 export function blogDetailHref(slug: string): string {
-  return `/blog-details/${encodeURIComponent(slug.trim())}`;
+  return `/blogs/${encodeURIComponent(slug.trim())}`;
 }
 
 export function formatBlogDate(dateString?: string | null): string {

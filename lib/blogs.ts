@@ -47,7 +47,7 @@ export type BlogDetailApiResponse = {
 const BLOG_REVALIDATE = 3600;
 
 export function blogDetailHref(slug: string): string {
-  return `/blog-details/${encodeURIComponent(slug)}`;
+  return `/blogs/${encodeURIComponent(slug)}`;
 }
 
 export function blogsListHref(page = 1): string {
