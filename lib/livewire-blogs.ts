@@ -101,6 +101,9 @@ export const fetchBlogsByCategory = cache(
 export async function fetchAllBlogs(
   categories: BlogCategory[],
 ): Promise<BlogPost[]> {
+  const fromList = await fetchAllBlogsList();
+  if (fromList.length > 0) return fromList;
+
   if (categories.length === 0) return [];
 
   const lists = await Promise.all(
@@ -114,6 +117,30 @@ export async function fetchAllBlogs(
     return true;
   });
 }
+
+/** Single-request blog list — preferred over per-category fetches. */
+export const fetchAllBlogsList = cache(async (): Promise<BlogPost[]> => {
+  const res = await publicFetcher<
+    ApiSuccess<
+      | ApiBlogItem[]
+      | {
+          data?: ApiBlogItem[];
+        }
+    > & { status?: boolean }
+  >('/blogs', {}, REVALIDATE);
+
+  if ((!res?.success && !res?.status) || !res.data) return [];
+
+  const rows = Array.isArray(res.data)
+    ? res.data
+    : Array.isArray(res.data.data)
+      ? res.data.data
+      : [];
+
+  return rows
+    .map((item) => mapPost(item))
+    .filter((b): b is BlogPost => b !== null);
+});
 
 export const fetchBlogBySlug = cache(
   async (slug: string): Promise<BlogDetailPost | null> => {

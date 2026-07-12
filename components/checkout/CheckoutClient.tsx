@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,15 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { ShoppingBag, Phone, Package, Mail, Loader2, User, MapPin } from 'lucide-react';
+import {
+  ShoppingBag,
+  Phone,
+  Package,
+  Mail,
+  Loader2,
+  User,
+  MapPin,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -23,7 +31,7 @@ import { placeOrder, type CheckoutOrderPayload } from '@/lib/fetcher';
 import type { Cart } from '@/lib/cart';
 import { resolveCartImageSrc } from '@/lib/cart-image';
 import { toast } from 'sonner';
-import { useCartStore } from '@/stores/cart-store';
+import { useCartStore, ensureCartHydrated } from '@/stores/cart-store';
 import UpdateCart from '@/components/product/UpdateCart';
 import CheckoutCoupon, {
   type AppliedCoupon,
@@ -40,10 +48,7 @@ import {
 import { cn } from '@/lib/utils';
 import { PENDING_CART_CLEAR_KEY } from '@/lib/pending-cart-clear';
 import { TkAmount } from '@/components/common/TkAmount';
-import {
-  calculateRateAmount,
-  formatRatePercent,
-} from '@/lib/currency';
+import { calculateRateAmount, formatRatePercent } from '@/lib/currency';
 
 function FieldGroup({
   label,
@@ -95,17 +100,14 @@ export default function CheckoutPageClient({
   tax: string | number;
   userProfile?: unknown;
 }) {
+  ensureCartHydrated(initialCart);
+
   const router = useRouter();
-  const didInitCart = useRef(false);
-  const cart = useCartStore((s) => s.cart);
+  const hydrated = useCartStore((s) => s.hydrated);
+  const storeCart = useCartStore((s) => s.cart);
+  const cart = hydrated ? storeCart : initialCart;
   const cartProducts = cart.items;
   const itemCount = cartProducts.length;
-
-  useLayoutEffect(() => {
-    if (didInitCart.current) return;
-    didInitCart.current = true;
-    useCartStore.getState().initFromServerCart(initialCart);
-  }, [initialCart]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -242,8 +244,7 @@ export default function CheckoutPageClient({
       return;
     }
 
-    const pointsRedeem: 0 | 1 =
-      useRewardPoints && rewardPointProfile ? 1 : 0;
+    const pointsRedeem: 0 | 1 = useRewardPoints && rewardPointProfile ? 1 : 0;
 
     const payload: CheckoutOrderPayload = {
       name: formData.name.trim(),
@@ -290,7 +291,7 @@ export default function CheckoutPageClient({
 
   if (cartProducts.length === 0) {
     return (
-      <main className="min-h-[60vh] bg-gradient-to-b from-muted/40 to-background px-4 py-12 sm:py-16">
+      <main className="min-h-[60vh] bg-gradient-to-b from-muted/40 to-background px-1 sm:px-4 py-12 sm:py-16">
         <div className="mx-auto max-w-md">
           <Empty className="rounded-2xl border border-border/80 bg-card shadow-sm ring-1 ring-black/[0.03]">
             <EmptyHeader>
@@ -329,7 +330,7 @@ export default function CheckoutPageClient({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50/80 to-background pb-28 lg:pb-10">
-      <div className="mx-auto max-w-[95rem] px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-[95rem] px-1 sm:px-4 py-6 sm:py-8">
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2 lg:gap-8">
           <div className="min-w-0">
             <form
@@ -338,7 +339,7 @@ export default function CheckoutPageClient({
               noValidate
               className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
             >
-              <div className="space-y-6 p-4 sm:p-6">
+              <div className="space-y-6 p-1 sm:p-6">
                 <div className="overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-primary/[0.06] via-white to-secondary/[0.08]">
                   <div className="border-b border-slate-200/80 bg-white/90 px-4 py-4 sm:px-5">
                     <div className="flex items-start gap-3">
@@ -357,88 +358,91 @@ export default function CheckoutPageClient({
                   </div>
 
                   <div className="space-y-4 p-4 sm:p-5">
-                  <div className="flex flex-row flex-wrap gap-4">
-                    <div className="min-w-[12rem] flex-1 basis-[14rem]">
-                      <FieldGroup
-                        label="Full name"
-                        htmlFor="checkout-name"
-                        error={errors.name}
-                      >
-                        <Input
-                          id="checkout-name"
-                          name="name"
-                          autoComplete="name"
-                          placeholder="e.g. Rahman Ahmed"
-                          value={formData.name}
-                          onChange={(e) =>
-                            setFormData({ ...formData, name: e.target.value })
-                          }
-                          aria-invalid={Boolean(errors.name)}
-                          className="h-11 rounded-xl border-slate-200 bg-white focus-visible:ring-primary"
-                        />
-                      </FieldGroup>
+                    <div className="flex flex-row flex-wrap gap-4">
+                      <div className="min-w-[12rem] flex-1 basis-[14rem]">
+                        <FieldGroup
+                          label="Full name"
+                          htmlFor="checkout-name"
+                          error={errors.name}
+                        >
+                          <Input
+                            id="checkout-name"
+                            name="name"
+                            autoComplete="name"
+                            placeholder="e.g. Rahman Ahmed"
+                            value={formData.name}
+                            onChange={(e) =>
+                              setFormData({ ...formData, name: e.target.value })
+                            }
+                            aria-invalid={Boolean(errors.name)}
+                            className="h-11 rounded-xl border-slate-200 bg-white focus-visible:ring-primary"
+                          />
+                        </FieldGroup>
+                      </div>
+                      <div className="min-w-[12rem] flex-1 basis-[14rem]">
+                        <FieldGroup
+                          label="Mobile number"
+                          htmlFor="checkout-phone"
+                          hint="Digits only"
+                          error={errors.phone}
+                        >
+                          <div className="relative">
+                            <Phone
+                              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                              aria-hidden
+                            />
+                            <Input
+                              id="checkout-phone"
+                              name="phone"
+                              type="tel"
+                              inputMode="numeric"
+                              autoComplete="tel"
+                              placeholder="01XXXXXXXXX"
+                              value={formData.phone}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  phone: e.target.value,
+                                })
+                              }
+                              aria-invalid={Boolean(errors.phone)}
+                              className="h-11 rounded-xl border-slate-200 bg-white pl-10 focus-visible:ring-primary"
+                            />
+                          </div>
+                        </FieldGroup>
+                      </div>
                     </div>
-                    <div className="min-w-[12rem] flex-1 basis-[14rem]">
+
+                    <div className="mt-4">
                       <FieldGroup
-                        label="Mobile number"
-                        htmlFor="checkout-phone"
-                        hint="Digits only"
-                        error={errors.phone}
+                        label="Email (optional)"
+                        htmlFor="checkout-email"
+                        error={errors.email}
                       >
                         <div className="relative">
-                          <Phone
+                          <Mail
                             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                             aria-hidden
                           />
                           <Input
-                            id="checkout-phone"
-                            name="phone"
-                            type="tel"
-                            inputMode="numeric"
-                            autoComplete="tel"
-                            placeholder="01XXXXXXXXX"
-                            value={formData.phone}
+                            id="checkout-email"
+                            name="email"
+                            type="email"
+                            autoComplete="email"
+                            placeholder="you@example.com"
+                            value={formData.email}
                             onChange={(e) =>
                               setFormData({
                                 ...formData,
-                                phone: e.target.value,
+                                email: e.target.value,
                               })
                             }
-                            aria-invalid={Boolean(errors.phone)}
+                            aria-invalid={Boolean(errors.email)}
                             className="h-11 rounded-xl border-slate-200 bg-white pl-10 focus-visible:ring-primary"
                           />
                         </div>
                       </FieldGroup>
                     </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <FieldGroup
-                      label="Email (optional)"
-                      htmlFor="checkout-email"
-                      error={errors.email}
-                    >
-                      <div className="relative">
-                        <Mail
-                          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                          aria-hidden
-                        />
-                        <Input
-                          id="checkout-email"
-                          name="email"
-                          type="email"
-                          autoComplete="email"
-                          placeholder="you@example.com"
-                          value={formData.email}
-                          onChange={(e) =>
-                            setFormData({ ...formData, email: e.target.value })
-                          }
-                          aria-invalid={Boolean(errors.email)}
-                          className="h-11 rounded-xl border-slate-200 bg-white pl-10 focus-visible:ring-primary"
-                        />
-                      </div>
-                    </FieldGroup>
-                  </div>
                   </div>
                 </div>
 
@@ -489,7 +493,7 @@ export default function CheckoutPageClient({
                 <Separator className="bg-border/70" />
 
                 <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                  <div className="flex items-start gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 sm:px-5">
+                  <div className="flex items-start gap-3 border-b border-slate-200 bg-slate-50 px-1 py-4 sm:px-5">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                       <MapPin className="h-5 w-5" strokeWidth={2} />
                     </div>
@@ -503,7 +507,10 @@ export default function CheckoutPageClient({
                     </div>
                   </div>
                   {errors.delivery ? (
-                    <p className="px-4 pt-3 text-sm text-destructive sm:px-5" role="alert">
+                    <p
+                      className="px-2 pt-3 text-sm text-destructive sm:px-5"
+                      role="alert"
+                    >
                       {errors.delivery}
                     </p>
                   ) : null}
@@ -565,7 +572,9 @@ export default function CheckoutPageClient({
                               <span className="mt-1 block text-sm text-slate-500">
                                 Delivery fee:{' '}
                                 <span className="font-semibold text-primary">
-                                  <TkAmount amount={Number(area.delivery_charge)} />
+                                  <TkAmount
+                                    amount={Number(area.delivery_charge)}
+                                  />
                                 </span>
                               </span>
                             </span>
@@ -578,9 +587,11 @@ export default function CheckoutPageClient({
 
                 <Separator className="bg-slate-200" />
 
-                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <h2 className="text-base font-bold text-slate-900">Payment</h2>
-                  <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white p-1 sm:p-5">
+                  <h2 className="text-base font-bold text-slate-900">
+                    Payment
+                  </h2>
+                  <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-2 sm:p-4">
                     <p className="font-semibold text-slate-900">
                       Cash on delivery
                       <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900">
@@ -646,7 +657,7 @@ export default function CheckoutPageClient({
                 </div>
 
                 <div className="max-h-[min(48vh,24rem)] overflow-y-auto overscroll-contain [-ms-overflow-style:auto] [scrollbar-gutter:stable] [scrollbar-width:thin] [scrollbar-color:hsl(var(--muted-foreground)/0.35)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30">
-                  <ul className="space-y-2.5 p-3 sm:space-y-3 sm:p-4">
+                  <ul className="space-y-2.5 p-1 sm:space-y-3 sm:p-4">
                     {cartProducts.map((item) => (
                       <li key={item.id}>
                         <div className="rounded-xl border border-border/50 bg-gradient-to-b from-white to-slate-50/90 p-2.5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.02] sm:p-3 dark:from-card dark:to-card">
@@ -692,7 +703,7 @@ export default function CheckoutPageClient({
                   </ul>
                 </div>
 
-                <div className="border-t border-border/60 bg-slate-50/80 px-4 py-4 sm:px-5 dark:bg-muted/20">
+                <div className="border-t border-border/60 bg-slate-50/80 px-1 py-1 sm:px-5 dark:bg-muted/20">
                   <div className="mb-3 flex items-center gap-2">
                     <span className="h-px flex-1 bg-border/80" aria-hidden />
                     <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
@@ -724,7 +735,7 @@ export default function CheckoutPageClient({
                     ))}
                   </dl>
 
-                  <div className="mt-3 rounded-xl border border-border/50 bg-white/80 px-3 py-1 shadow-sm dark:bg-card/60">
+                  <div className="mt-3 rounded-xl border border-border/50 bg-white/80 px-1 sm:px-3 py-1 shadow-sm dark:bg-card/60">
                     <CheckoutCoupon
                       subtotal={subtotal}
                       appliedCoupon={appliedCoupon}

@@ -81,6 +81,7 @@ export default function MobileBottomNav({
 
   const cartCount = cart.items.length;
   const isHome = pathname === '/';
+  const isCheckout = pathname === '/checkout';
   const isWishlist = pathname.startsWith('/user/wishlist');
   const isAccount = pathname.startsWith('/user/account');
 
@@ -148,21 +149,39 @@ export default function MobileBottomNav({
             </span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setCartSheetOpen(true)}
-            className={cn(navItemClass, 'text-gray-500 hover:text-gray-800')}
-          >
-            <span className="relative">
-              <ShoppingBag className="h-6 w-6 shrink-0" strokeWidth={1.75} />
-              {cartCount > 0 ? (
-                <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold text-white">
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              ) : null}
-            </span>
-            <span className={labelClass}>Cart</span>
-          </button>
+          {isCheckout ? (
+            <Link
+              prefetch
+              href="/cart"
+              className={cn(navItemClass, 'text-gray-500 hover:text-gray-800')}
+            >
+              <span className="relative">
+                <ShoppingBag className="h-6 w-6 shrink-0" strokeWidth={1.75} />
+                {cartCount > 0 ? (
+                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold text-white">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                ) : null}
+              </span>
+              <span className={labelClass}>Cart</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setCartSheetOpen(true)}
+              className={cn(navItemClass, 'text-gray-500 hover:text-gray-800')}
+            >
+              <span className="relative">
+                <ShoppingBag className="h-6 w-6 shrink-0" strokeWidth={1.75} />
+                {cartCount > 0 ? (
+                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold text-white">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                ) : null}
+              </span>
+              <span className={labelClass}>Cart</span>
+            </button>
+          )}
 
           <Link
             prefetch

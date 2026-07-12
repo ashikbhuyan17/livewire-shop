@@ -7,6 +7,9 @@ import { AUTH_USER_COOKIE } from '@/lib/auth-cookies';
 import { isPartnerUser } from '@/lib/partner-utils';
 import UserDashboardShell from '@/components/user/sidebar/UserDashboardShell';
 
+/** Auth routes read cookies — must not be statically generated at build time. */
+export const dynamic = 'force-dynamic';
+
 export default async function UserLayout({
   children,
 }: {

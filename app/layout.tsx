@@ -1,29 +1,18 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import localFont from 'next/font/local';
 import './globals.css';
-import Header from '@/components/common/Header';
 import Footer from '@/components/common/Footer';
-import CartSidebar from '@/components/common/CartSidebar';
-import MobileBottomNav from '@/components/common/MobileBottomNav';
-import buildCategoryMenu, {
-  fetchHeaderCategories,
-} from '@/fetch/buildCategoryMenu';
 import { Toaster } from '@/components/ui/sonner';
-import { getCart } from '@/lib/cart';
-import { getWishlistSummary } from '@/lib/wishlist';
-import { getCompareSummary } from '@/lib/compare';
-import { getNotificationSummary } from '@/lib/notifications';
-import WishlistStoreInit from '@/components/common/WishlistStoreInit';
-import CompareStoreInit from '@/components/common/CompareStoreInit';
-import { getLayoutSessionUser } from '@/lib/auth-session';
+import { LayoutHeader } from '@/components/layout/LayoutHeader';
+import { LayoutMobileNav } from '@/components/layout/LayoutMobileNav';
+// import { HeaderSkeleton } from '@/components/layout/PageSkeletons';
 import {
   SITE_BRAND_SHORT,
   getSiteSettingsPublic,
   resolveMetadataBase,
   getAbsoluteImageFilename,
 } from '@/lib/site';
-
-const LAYOUT_REVALIDATE_SECONDS = 3600;
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -92,54 +81,32 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const dynamic = 'force-dynamic';
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [categories, headerCategories, initialCart, user] = await Promise.all([
-    buildCategoryMenu(),
-    fetchHeaderCategories(),
-    getCart(),
-    getLayoutSessionUser(),
-  ]);
-
-  const [wishlistSummary, compareSummary, notificationSummary] = user
-    ? await Promise.all([
-        getWishlistSummary(),
-        getCompareSummary(),
-        getNotificationSummary(),
-      ])
-    : [
-        { count: 0, productIds: [] as number[] },
-        { count: 0, productIds: [] as number[] },
-        { count: 0, unreadCount: 0 },
-      ];
-
   return (
     <html lang="en" className="overflow-x-hidden" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased max-w-screen`}
         suppressHydrationWarning
       >
-        <>
-          <WishlistStoreInit productIds={wishlistSummary.productIds} />
-          <CompareStoreInit productIds={compareSummary.productIds} />
-          <Header
-            categories={categories}
-            headerCategories={headerCategories}
-            user={user}
-          />
-          <div className="pb-20 mt-[3.50rem] lg:mt-[9.75rem] lg:pb-0">
-            <CartSidebar initialCart={initialCart} />
-            {children}
-            <Toaster position="top-right" richColors />
+        <LayoutHeader />
+
+        <div className="pb-20 mt-[3.50rem] lg:mt-[9.75rem] lg:pb-0">
+          {children}
+
+          <Toaster position="top-right" richColors />
+
+          <Suspense fallback={null}>
             <Footer />
-          </div>
-          <MobileBottomNav categories={categories} user={user} />
-        </>
+          </Suspense>
+        </div>
+
+        <Suspense fallback={null}>
+          <LayoutMobileNav />
+        </Suspense>
       </body>
     </html>
   );

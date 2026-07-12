@@ -4,6 +4,8 @@ import { fetchBusinessLocations } from '@/lib/business-locations';
 import { DEMO_OUTLETS } from '@/lib/pages-demo-data';
 import { SITE_BRAND_SHORT, buildPageMeta } from '@/lib/site';
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = buildPageMeta({
   title: 'Shop Location',
   description: `Find ${SITE_BRAND_SHORT} outlets and care points across Bangladesh.`,

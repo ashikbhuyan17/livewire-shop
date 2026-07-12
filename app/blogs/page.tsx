@@ -7,6 +7,8 @@ import {
 } from '@/lib/livewire-blogs';
 import { SITE_BRAND_SHORT, buildPageMeta } from '@/lib/site';
 
+export const revalidate = 300;
+
 export const metadata: Metadata = buildPageMeta({
   title: 'Blog',
   description: `Read the latest tech news, reviews, and buying guides from ${SITE_BRAND_SHORT}.`,
@@ -20,8 +22,8 @@ type PageProps = {
 
 export default async function BlogsPage({ searchParams }: PageProps) {
   const { category: categoryParam } = await searchParams;
-  const categories = await fetchBlogCategories();
 
+  const categories = await fetchBlogCategories();
   const activeCategory =
     categoryParam && categories.some((c) => c.slug === categoryParam)
       ? categoryParam

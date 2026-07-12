@@ -5,6 +5,8 @@ import WishlistInfoBar from '@/components/wishlist/WishlistInfoBar';
 import WishlistEmptyState from '@/components/wishlist/WishlistEmptyState';
 import WishlistProductCard from '@/components/wishlist/WishlistProductCard';
 
+export const dynamic = 'force-dynamic';
+
 export default async function WishlistPage() {
   const wishlist: any = await fetcher(
     '/wishlist',

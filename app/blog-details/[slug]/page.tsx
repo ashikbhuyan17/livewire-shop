@@ -8,6 +8,8 @@ import {
 } from '@/lib/livewire-blogs';
 import { buildPageMeta } from '@/lib/site';
 
+export const revalidate = 300;
+
 type PageProps = {
   params: Promise<{ slug: string }>;
 };

@@ -72,6 +72,12 @@ export type CartStore = {
   clearCart: () => void;
 };
 
+export function ensureCartHydrated(cart: Cart) {
+  if (!useCartStore.getState().hydrated) {
+    useCartStore.getState().initFromServerCart(cart);
+  }
+}
+
 export const useCartStore = create<CartStore>((set, get) => {
   const bump = (delta: number) => {
     inFlight += delta;

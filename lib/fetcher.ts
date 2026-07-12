@@ -44,7 +44,6 @@ export async function fetcher<T>(
   try {
     const cookiesStore = await cookies();
     const token = cookiesStore.get(AUTH_TOKEN_COOKIE)?.value;
-    console.log('🚀 ~ fetcher ~ token:', token);
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${slug}`, {
       ...options,
       next: revalidate ? { revalidate } : undefined,
@@ -56,7 +55,13 @@ export async function fetcher<T>(
 
     return res.json() as Promise<T>;
   } catch (error) {
-    console.log('Fetcher Error:', error);
+    const digest =
+      error && typeof error === 'object' && 'digest' in error
+        ? String((error as { digest?: string }).digest)
+        : '';
+    if (digest !== 'DYNAMIC_SERVER_USAGE') {
+      console.log('Fetcher Error:', error);
+    }
     throw error;
   }
 }

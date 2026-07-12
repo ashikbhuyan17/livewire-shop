@@ -1,7 +1,8 @@
 'use client';
 
-import { Loader2, ShoppingBag } from 'lucide-react';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ShoppingBag } from 'lucide-react';
+import React, { useEffect } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Sheet,
@@ -16,46 +17,31 @@ import { Button } from '../ui/button';
 import type { Cart } from '@/lib/cart';
 import { resolveCartImageSrc } from '@/lib/cart-image';
 import { formatBDTNumber } from '@/lib/home-demo-data';
-import { useCartStore } from '@/stores/cart-store';
+import { useCartStore, ensureCartHydrated } from '@/stores/cart-store';
 import UpdateCart from '@/components/product/UpdateCart';
 import { TkAmount } from '@/components/common/TkAmount';
 
 function CartSidebar({ initialCart }: { initialCart: Cart }) {
-  const router = useRouter();
+  ensureCartHydrated(initialCart);
+
   const pathname = usePathname();
-  const cart = useCartStore((s) => s.cart);
+  const router = useRouter();
+  const hydrated = useCartStore((s) => s.hydrated);
+  const storeCart = useCartStore((s) => s.cart);
+  const cart = hydrated ? storeCart : initialCart;
   const cartSheetOpen = useCartStore((s) => s.cartSheetOpen);
   const setCartSheetOpen = useCartStore((s) => s.setCartSheetOpen);
-  const didInit = useRef(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const isCheckout = pathname === '/checkout';
 
   useEffect(() => {
-    if (pathname === '/checkout' && cartSheetOpen) {
-      setCartSheetOpen(false);
-      setCheckoutLoading(false);
-      return;
-    }
-    if (checkoutLoading && pathname.startsWith('/signin')) {
-      setCheckoutLoading(false);
+    if (isCheckout) {
       setCartSheetOpen(false);
     }
-  }, [pathname, cartSheetOpen, setCartSheetOpen, checkoutLoading]);
+  }, [isCheckout, setCartSheetOpen]);
 
   useEffect(() => {
-    if (!checkoutLoading) return;
-    const t = setTimeout(() => setCheckoutLoading(false), 25_000);
-    return () => clearTimeout(t);
-  }, [checkoutLoading]);
-
-  useEffect(() => {
-    if (cartSheetOpen) router.prefetch('/checkout');
-  }, [cartSheetOpen, router]);
-
-  useLayoutEffect(() => {
-    if (didInit.current) return;
-    didInit.current = true;
-    useCartStore.getState().initFromServerCart(initialCart);
-  }, [initialCart]);
+    if (cartSheetOpen && !isCheckout) router.prefetch('/checkout');
+  }, [cartSheetOpen, isCheckout, router]);
 
   const itemCount = cart.items.reduce((n, i) => n + i.qty, 0);
   const totalPrice = cart.items.reduce(
@@ -70,34 +56,36 @@ function CartSidebar({ initialCart }: { initialCart: Cart }) {
 
   return (
     <Sheet
-      open={cartSheetOpen}
+      open={isCheckout ? false : cartSheetOpen}
       onOpenChange={(open) => {
+        if (isCheckout) return;
         setCartSheetOpen(open);
-        if (!open) setCheckoutLoading(false);
       }}
     >
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label={`Open cart, ${itemCount} items, ৳${formatBDTNumber(totalPrice)}`}
-          className="fixed right-0 top-1/2 z-30 hidden w-[88px] min-w-[80px] -translate-y-1/2 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-l-2xl border border-primary/20 bg-gradient-to-b from-primary to-primary/90 px-2 py-2.5 text-white shadow-lg shadow-primary/25 ring-1 ring-primary/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl sm:flex"
-        >
-          <div className="relative flex shrink-0 items-center justify-center">
-            <ShoppingBag className="h-5 w-5 text-white" strokeWidth={2} />
-            <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-0.5 text-[9px] font-bold leading-none text-slate-900 shadow-sm">
-              {itemCount}
+      {!isCheckout ? (
+        <SheetTrigger asChild>
+          <button
+            type="button"
+            aria-label={`Open cart, ${itemCount} items, ৳${formatBDTNumber(totalPrice)}`}
+            className="fixed right-0 top-1/2 z-30 hidden w-[88px] min-w-[80px] -translate-y-1/2 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-l-2xl border border-primary/20 bg-gradient-to-b from-primary to-primary/90 px-2 py-2.5 text-white shadow-lg shadow-primary/25 ring-1 ring-primary/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl sm:flex"
+          >
+            <div className="relative flex shrink-0 items-center justify-center">
+              <ShoppingBag className="h-5 w-5 text-white" strokeWidth={2} />
+              <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-0.5 text-[9px] font-bold leading-none text-slate-900 shadow-sm">
+                {itemCount}
+              </span>
+            </div>
+            <span className="text-center text-xs font-bold leading-tight text-white/95">
+              {itemCount} items
             </span>
-          </div>
-          <span className="text-center text-xs font-bold leading-tight text-white/95">
-            {itemCount} items
-          </span>
-          <span className="mt-0.5 flex w-full max-w-[calc(100%-4px)] justify-center rounded-md bg-secondary px-1.5 py-1 shadow-sm">
-            <span className="text-sm font-bold leading-tight text-slate-900">
-              <TkAmount amount={totalPrice} />
+            <span className="mt-0.5 flex w-full max-w-[calc(100%-4px)] justify-center rounded-md bg-secondary px-1.5 py-1 shadow-sm">
+              <span className="text-sm font-bold leading-tight text-slate-900">
+                <TkAmount amount={totalPrice} />
+              </span>
             </span>
-          </span>
-        </button>
-      </SheetTrigger>
+          </button>
+        </SheetTrigger>
+      ) : null}
       <SheetContent
         side="right"
         className="w-full border-l border-slate-200 p-0 sm:max-w-md"
@@ -198,31 +186,24 @@ function CartSidebar({ initialCart }: { initialCart: Cart }) {
             </div>
 
             <Button
+              asChild
               type="button"
               className="h-11 w-full rounded-lg bg-slate-900 text-sm font-bold uppercase text-secondary hover:bg-slate-800 disabled:opacity-80"
               size="default"
-              disabled={checkoutLoading || cart.items.length === 0}
-              onClick={() => {
-                if (pathname === '/checkout') {
-                  setCartSheetOpen(false);
-                  setCheckoutLoading(false);
-                  return;
-                }
-                setCheckoutLoading(true);
-                router.push('/checkout');
-              }}
+              disabled={cart.items.length === 0}
             >
-              {checkoutLoading ? (
-                <>
-                  <Loader2
-                    className="mr-2 h-4 w-4 shrink-0 animate-spin"
-                    aria-hidden
-                  />
-                  Going to checkout…
-                </>
-              ) : (
-                'Checkout'
-              )}
+              <Link
+                href="/checkout"
+                prefetch
+                onClick={(e) => {
+                  if (pathname === '/checkout') {
+                    e.preventDefault();
+                    setCartSheetOpen(false);
+                  }
+                }}
+              >
+                Checkout
+              </Link>
             </Button>
           </div>
         </div>

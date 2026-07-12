@@ -5,6 +5,8 @@ import CompareInfoBar from '@/components/compare/CompareInfoBar';
 import CompareEmptyState from '@/components/compare/CompareEmptyState';
 import CompareTable from '@/components/compare/CompareTable';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ComparePage() {
   const compare: any = await fetcher(
     '/compare',

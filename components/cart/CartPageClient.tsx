@@ -1,13 +1,12 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ArrowRight, Gift, Loader2, ShoppingCart, Tag, Trash2 } from 'lucide-react';
 import type { Cart } from '@/lib/cart';
 import { resolveCartImageSrc } from '@/lib/cart-image';
-import { useCartStore } from '@/stores/cart-store';
+import { ensureCartHydrated, useCartStore } from '@/stores/cart-store';
 import CartQuantityStepper from './CartQuantityStepper';
 import { TkAmount } from '@/components/common/TkAmount';
 import { Button } from '@/components/ui/button';
@@ -15,19 +14,14 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 export default function CartPageClient({ initialCart }: { initialCart: Cart }) {
-  const router = useRouter();
-  const didInit = useRef(false);
-  const cart = useCartStore((s) => s.cart);
+  ensureCartHydrated(initialCart);
+
+  const hydrated = useCartStore((s) => s.hydrated);
+  const storeCart = useCartStore((s) => s.cart);
+  const cart = hydrated ? storeCart : initialCart;
   const isPending = useCartStore((s) => s.isPending);
   const [promoCode, setPromoCode] = useState('');
   const [giftVoucher, setGiftVoucher] = useState('');
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-
-  useLayoutEffect(() => {
-    if (didInit.current) return;
-    didInit.current = true;
-    useCartStore.getState().initFromServerCart(initialCart);
-  }, [initialCart]);
 
   const total = cart.items.reduce((sum, item) => sum + item.price * item.qty, 0);
 
@@ -45,12 +39,6 @@ export default function CartPageClient({ initialCart }: { initialCart: Cart }) {
       return;
     }
     toast.info('Gift vouchers are not available in demo mode yet.');
-  };
-
-  const handleCheckout = () => {
-    if (cart.items.length === 0) return;
-    setCheckoutLoading(true);
-    router.push('/checkout');
   };
 
   return (
@@ -271,22 +259,14 @@ export default function CartPageClient({ initialCart }: { initialCart: Cart }) {
                     <Link href="/">Continue Shopping</Link>
                   </Button>
                   <Button
-                    type="button"
-                    onClick={handleCheckout}
-                    disabled={checkoutLoading}
+                    asChild
+                    disabled={cart.items.length === 0}
                     className="group h-12 w-full rounded-xl bg-slate-900 text-sm font-bold uppercase text-secondary shadow-md transition hover:bg-slate-800 lg:flex-1"
                   >
-                    {checkoutLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing…
-                      </>
-                    ) : (
-                      <>
-                        Check Out
-                        <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5" />
-                      </>
-                    )}
+                    <Link href="/checkout" prefetch>
+                      Check Out
+                      <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-0.5" />
+                    </Link>
                   </Button>
                 </div>
               </div>
